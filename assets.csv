@@ -1,0 +1,108 @@
+ticker,name,sector,country
+AAPL,Apple Inc.,Technology,USA
+MSFT,Microsoft Corporation,Technology,USA
+GOOGL,Alphabet Inc.,Technology,USA
+AMZN,Amazon.com Inc.,Consumer Discretionary,USA
+META,Meta Platforms Inc.,Technology,USA
+NVDA,NVIDIA Corporation,Technology,USA
+TSLA,Tesla Inc.,Consumer Discretionary,USA
+JPM,JPMorgan Chase & Co.,Finance,USA
+GS,Goldman Sachs Group,Finance,USA
+BAC,Bank of America,Finance,USA
+V,Visa Inc.,Finance,USA
+MA,Mastercard Inc.,Finance,USA
+XOM,Exxon Mobil Corp.,Energy,USA
+CVX,Chevron Corp.,Energy,USA
+JNJ,Johnson & Johnson,Healthcare,USA
+PFE,Pfizer Inc.,Healthcare,USA
+ABBV,AbbVie Inc.,Healthcare,USA
+UNH,UnitedHealth Group,Healthcare,USA
+WMT,Walmart Inc.,Consumer Staples,USA
+KO,Coca-Cola Company,Consumer Staples,USA
+PEP,PepsiCo Inc.,Consumer Staples,USA
+PG,Procter & Gamble,Consumer Staples,USA
+COST,Costco Wholesale,Consumer Staples,USA
+DIS,Walt Disney Company,Communication Services,USA
+NFLX,Netflix Inc.,Communication Services,USA
+BA,Boeing Company,Industrials,USA
+GE,General Electric,Industrials,USA
+CAT,Caterpillar Inc.,Industrials,USA
+CRM,Salesforce Inc.,Technology,USA
+HD,Home Depot,Consumer Discretionary,USA
+MCD,McDonald's Corp.,Consumer Discretionary,USA
+SAP.DE,SAP SE,Technology,Germany
+SIE.DE,Siemens AG,Industrials,Germany
+BAS.DE,BASF SE,Materials,Germany
+ADS.DE,Adidas AG,Consumer Discretionary,Germany
+DBK.DE,Deutsche Bank,Finance,Germany
+VOW3.DE,Volkswagen AG,Consumer Discretionary,Germany
+BAYN.DE,Bayer AG,Healthcare,Germany
+ALV.DE,Allianz SE,Finance,Germany
+BMW.DE,BMW AG,Consumer Discretionary,Germany
+DTE.DE,Deutsche Telekom,Communication Services,Germany
+MC.PA,LVMH,Consumer Discretionary,France
+OR.PA,L'Oreal,Consumer Discretionary,France
+TTE.PA,TotalEnergies,Energy,France
+BNP.PA,BNP Paribas,Finance,France
+AIR.PA,Airbus SE,Industrials,France
+SAN.PA,Sanofi,Healthcare,France
+KER.PA,Kering,Consumer Discretionary,France
+VIV.PA,Vivendi,Communication Services,France
+HSBA.L,HSBC Holdings,Finance,UK
+BP.L,BP PLC,Energy,UK
+AZN.L,AstraZeneca,Healthcare,UK
+ULVR.L,Unilever PLC,Consumer Staples,UK
+RIO.L,Rio Tinto,Materials,UK
+GSK.L,GSK PLC,Healthcare,UK
+BARC.L,Barclays PLC,Finance,UK
+VOD.L,Vodafone Group,Communication Services,UK
+7203.T,Toyota Motor,Consumer Discretionary,Japan
+9984.T,SoftBank Group,Technology,Japan
+6758.T,Sony Group,Consumer Discretionary,Japan
+8306.T,MUFG,Finance,Japan
+7267.T,Honda Motor,Consumer Discretionary,Japan
+9432.T,NTT,Communication Services,Japan
+0700.HK,Tencent Holdings,Technology,China
+9988.HK,Alibaba Group,Technology,China
+1299.HK,AIA Group,Finance,Hong Kong
+0005.HK,HSBC Holdings (HK),Finance,Hong Kong
+0941.HK,China Mobile,Communication Services,China
+VALE3.SA,Vale S.A.,Materials,Brazil
+PETR4.SA,Petrobras,Energy,Brazil
+ITUB4.SA,Itau Unibanco,Finance,Brazil
+BBDC4.SA,Banco Bradesco,Finance,Brazil
+SHOP.TO,Shopify Inc.,Technology,Canada
+TD.TO,Toronto-Dominion Bank,Finance,Canada
+RY.TO,Royal Bank of Canada,Finance,Canada
+BHP.AX,BHP Group,Materials,Australia
+CBA.AX,Comm. Bank of Australia,Finance,Australia
+ASML.AS,ASML Holding,Technology,Netherlands
+INGA.AS,ING Group,Finance,Netherlands
+SAN.MC,Banco Santander,Finance,Spain
+BBVA.MC,BBVA,Finance,Spain
+ITX.MC,Inditex,Consumer Discretionary,Spain
+NESN.SW,Nestle S.A.,Consumer Staples,Switzerland
+ROG.SW,Roche Holding,Healthcare,Switzerland
+NOVN.SW,Novartis AG,Healthcare,Switzerland
+2330.TW,TSMC,Technology,Taiwan
+005930.KS,Samsung Electronics,Technology,South Korea
+^GSPC,S&P 500,Country,USA
+^IXIC,Nasdaq Composite,Country,USA
+^DJI,Dow Jones Industrial,Country,USA
+^GDAXI,DAX 40,Country,Germany
+^FCHI,CAC 40,Country,France
+^FTSE,FTSE 100,Country,UK
+^N225,Nikkei 225,Country,Japan
+^HSI,Hang Seng Index,Country,Hong Kong
+^BVSP,IBOVESPA,Country,Brazil
+^MXX,IPC Mexico,Country,Mexico
+^BSESN,S&P BSE SENSEX,Country,India
+000001.SS,SSE Composite,Country,China
+^STI,STI Index,Country,Singapore
+^AEX,AEX Index,Country,Netherlands
+^IBEX,IBEX 35,Country,Spain
+^GSPTSE,S&P/TSX Composite,Country,Canada
+^OMX,OMX Stockholm 30,Country,Sweden
+^FTSEMIB.MI,FTSE MIB,Country,Italy
+^SSMI,SMI Index,Country,Switzerland
+^AXJO,S&P/ASX 200,Country,Australia
