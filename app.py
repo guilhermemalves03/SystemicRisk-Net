@@ -61,20 +61,28 @@ app.layout = html.Div([
             ], style={'flex': '1'})
         ], style={'display': 'flex', 'flex': '1', 'borderBottom': '1px solid #333'}),
 
-        # Linha Inferior: Mapa Global
+        # Linha Inferior: Mapa Global e Safe Havens
         html.Div([
-            dcc.Graph(id='contagion-map', style={'width': '100%', 'height': '100%'}, mathjax=True)
+            dcc.Graph(id='contagion-map', style={'flex': '3', 'height': '100%'}, mathjax=True),
+            
+            # Nova coluna de Safe Havens
+            html.Div([
+                html.H3("SAFE HAVENS", style={'fontSize': '11px', 'color': '#2ecc71', 'marginBottom': '10px'}),
+                html.Div(id='safe-havens-list', style={'height': 'calc(100% - 30px)', 'overflowY': 'auto', 'fontSize': '12px'})
+            ], style={'flex': '1', 'padding': '15px', 'borderLeft': '1px solid #333', 'backgroundColor': '#0a0a0a'})
+            
         ], style={'flex': '1', 'display': 'flex'})
 
     ], style={'display': 'flex', 'flexDirection': 'column', 'height': 'calc(100vh - 60px)'})
 
 ], style={'backgroundColor': '#000', 'color': '#eee', 'fontFamily': 'EB Garamond, serif', 'height': '100vh', 'overflow': 'hidden'})
 
+
 @app.callback(
     [Output('distribution-graph', 'figure'), Output('contagion-map', 'figure'),
-     Output('extreme-dates-list', 'children'), Output('mc-paths-store', 'data'), 
-     Output('mc-es-store', 'data'), Output('animation-interval', 'disabled'), 
-     Output('animation-frame', 'data')],
+     Output('extreme-dates-list', 'children'), Output('safe-havens-list', 'children'),
+     Output('mc-paths-store', 'data'), Output('mc-es-store', 'data'), 
+     Output('animation-interval', 'disabled'), Output('animation-frame', 'data')],
     [Input('main-asset-dropdown', 'value')]
 )
 def setup_analysis(selected_ticker):
@@ -135,13 +143,28 @@ def setup_analysis(selected_ticker):
     fig_map.update_layout(title=rf"$\text{{Systemic Contagion Map: }} \Delta \rho = \rho_{{\text{{stress}}}} - \rho_{{\text{{calm}}}}$",
                           font=LATEX_FONT, template="plotly_dark", margin=dict(l=10, r=10, t=50, b=10), paper_bgcolor='rgba(0,0,0,0)')
 
+    # Lógica de Safe Havens (Correlação Negativa) usando .format()
+    safe_havens = sorted([row for row in map_rows if row['$\Delta \\rho$'] < 0], key=lambda x: x['$\Delta \\rho$'])
+    
+    safe_list_items = [
+        html.Div([
+            html.Span(sh['Name']), 
+            html.Span("{:.2f}".format(sh['$\Delta \\rho$']), style={'float':'right','color':'#2ecc71'})
+        ], style={'padding':'4px 0','borderBottom':'1px solid #111'}) 
+        for sh in safe_havens
+    ]
+    
+    if not safe_list_items:
+        safe_list_items = [html.Div("No safe havens found.", style={'color': '#777', 'padding': '10px 0'})]
+
     # 3. Monte Carlo e Lista
     paths, sim_es = engine.run_monte_carlo(n_sims=80)
     list_items = [html.Div([html.Span(d.strftime('%Y-%m-%d')), html.Span(f" {extreme_days[d]:.2%}", 
                   style={'float':'right','color':'#e74c3c'})], style={'padding':'4px 0','borderBottom':'1px solid #111'}) 
                   for d in extreme_days.sort_index(ascending=False).index]
 
-    return fig_dist, fig_map, list_items, paths.tolist(), sim_es, False, 0
+    return fig_dist, fig_map, list_items, safe_list_items, paths.tolist(), sim_es, False, 0
+
 
 @app.callback(
     [Output('monte-carlo-graph', 'figure'), Output('animation-frame', 'data', allow_duplicate=True),
@@ -175,6 +198,7 @@ def animate_mc(n, paths, sim_es, frame):
                         margin=dict(l=40, r=20, t=50, b=40), xaxis=dict(range=[0, 30]), 
                         yaxis=dict(range=[np.min(paths)*0.95, np.max(paths)*1.05]))
     return fig_mc, frame + 1, False
+
 
 if __name__ == "__main__":
     app.run(debug=True)
