@@ -1,132 +1,136 @@
 import dash
-from dash import dcc, html
-import dash_bootstrap_components as dbc
-import pandas as pd
-import numpy as np
+from dash import dcc, html, Input, Output, State, no_update
 import plotly.graph_objects as go
-import plotly.colors as pc
+import numpy as np
+from scipy.stats import norm, gaussian_kde
+import plotly.express as px
+from engine import SystemicRiskEngine
 
-# 1. DADOS (Baseados no teu projeto SystemicRisk-Net [cite: 1, 2])
-# Ativos (Tabela I) 
-df_assets = pd.DataFrame({
-    'Ticker': ['Exxon Mobil', 'Goldman Sachs', 'Microsoft', 'JPMorgan', 'Chevron', 'SPY ETF', 'Alphabet'],
-    'Stress_Corr': [0.8603, 0.9154, 0.9056, 0.8431, 0.8665, 0.9535, 0.8710],
-    'Delta': [0.6076, 0.4976, 0.4383, 0.4369, 0.4340, 0.3051, 0.2506]
-})
+app = dash.Dash(__name__)
+engine = SystemicRiskEngine()
+engine.fetch_all_data(period="2y")
 
-# Global (Tabela II) [cite: 81]
-df_geo = pd.DataFrame({
-    'Country': ['China', 'Hong Kong', 'Singapore', 'Netherlands', 'Brazil', 'France', 'Spain', 'Germany', 'Japan', 'USA'],
-    'Delta': [0.9507, 0.8450, 0.7754, 0.6946, 0.6170, 0.3521, 0.3417, -0.0777, -0.5355, 0.0],
-    'lat': [35.86, 22.31, 1.35, 52.13, -14.23, 46.22, 40.46, 51.16, 36.20, 38.89],
-    'lon': [104.19, 114.16, 103.81, 5.29, -51.92, 2.21, -3.74, 10.45, 138.25, -77.03]
-})
+stocks_only = engine.assets_df[engine.assets_df['sector'] != 'Country']
+options = [{'label': f"{r['name']} ({r['ticker']})", 'value': r['ticker']} for _, r in stocks_only.iterrows()]
 
-def get_color(val):
-    normalized = (val + 1) / 2
-    clamped = max(0, min(1, normalized))
-    return pc.sample_colorscale('RdBu_r', clamped)[0]
+app.layout = html.Div([
+    # Memória da App
+    dcc.Store(id='mc-paths-store'),
+    dcc.Store(id='mc-es-store'), # Guarda o valor do ES simulado
+    dcc.Store(id='animation-frame', data=0),
+    dcc.Interval(id='animation-interval', interval=50, n_intervals=0, disabled=True),
 
-# 2. VISUALIZAÇÕES
-def create_network():
-    dist = 1 - df_assets['Delta']
-    angles = np.linspace(0, 2*np.pi, len(df_assets), endpoint=False)
-    x, y = dist * np.cos(angles), dist * np.sin(angles)
+    # Header
+    html.Div([
+        html.H1("QUANT RISK TERMINAL", style={'margin': '0', 'fontSize': '20px', 'letterSpacing': '2px'}),
+        dcc.Dropdown(id='main-asset-dropdown', options=options, value='AAPL', 
+                     style={'width': '250px', 'backgroundColor': '#1e1e1e', 'color': '#000'})
+    ], style={'display': 'flex', 'justifyContent': 'space-between', 'padding': '15px 30px', 'backgroundColor': '#000', 'borderBottom': '1px solid #333', 'color': '#fff'}),
+
+    html.Div([
+        # Coluna Esquerda: Histórico
+        html.Div([
+            html.H3("STRESS EVENTS (24M)", style={'fontSize': '12px', 'color': '#e74c3c'}),
+            html.Div(id='extreme-dates-list', style={'maxHeight': '80vh', 'overflowY': 'auto'})
+        ], style={'width': '200px', 'padding': '20px', 'borderRight': '1px solid #333'}),
+
+        # Gráficos Horizontais
+        html.Div([
+            dcc.Graph(id='distribution-graph', style={'flex': '1'}),
+            dcc.Graph(id='monte-carlo-graph', style={'flex': '1'})
+        ], style={'display': 'flex', 'flex': '1', 'padding': '10px', 'gap': '15px'})
+    ], style={'display': 'flex', 'backgroundColor': '#000', 'minHeight': '100vh'})
+], style={'backgroundColor': '#000', 'color': '#eee', 'fontFamily': 'monospace'})
+
+# CALLBACK 1: Setup inicial
+@app.callback(
+    [Output('distribution-graph', 'figure'),
+     Output('extreme-dates-list', 'children'),
+     Output('mc-paths-store', 'data'),
+     Output('mc-es-store', 'data'), # Output para o ES
+     Output('animation-interval', 'disabled'),
+     Output('animation-frame', 'data')],
+    [Input('main-asset-dropdown', 'value')]
+)
+def setup_analysis(selected_ticker):
+    engine.set_main_asset(selected_ticker)
+    extreme_days, var_limit, filtered_returns = engine.get_extreme_events(months=24)
+    es_hist = engine.calculate_expected_shortfall(filtered_returns)
+
+    # 1. Gráfico de Distribuição
+    counts, bin_edges = np.histogram(filtered_returns, bins=80, density=True)
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+    is_extreme = bin_centers <= var_limit
+    fig_dist = go.Figure()
+    fig_dist.add_trace(go.Bar(x=bin_centers[~is_extreme], y=counts[~is_extreme], name='Normal', marker_color='#333'))
+    fig_dist.add_trace(go.Bar(x=bin_centers[is_extreme], y=counts[is_extreme], name='Stress', marker_color='#c0392b'))
     
-    # Nomes flutuam BASTANTE ACIMA (offset aumentado)
-    text_offset = 0.25 
-    x_t, y_t = (dist + text_offset) * np.cos(angles), (dist + text_offset) * np.sin(angles)
+    x_range = np.linspace(filtered_returns.min(), filtered_returns.max(), 200)
+    fig_dist.add_trace(go.Scatter(x=x_range, y=gaussian_kde(filtered_returns)(x_range), name='KDE', line=dict(color='#3498db', width=2)))
+    fig_dist.add_trace(go.Scatter(x=x_range, y=norm.pdf(x_range, filtered_returns.mean(), filtered_returns.std()), name='Gaussian', line=dict(color='#777', dash='dash')))
     
-    fig = go.Figure()
+    fig_dist.update_layout(title=f"DISTRIBUTION: {selected_ticker}", template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+
+    # 2. Setup Monte Carlo
+    paths, sim_es = engine.run_monte_carlo(days=30, n_sims=50)
     
-    for i, row in df_assets.iterrows():
-        fig.add_trace(go.Scatter(x=[0, x[i]], y=[0, y[i]], mode='lines',
-                                 line=dict(width=row['Delta']*45, color=get_color(row['Delta'])),
-                                 opacity=0.7, hoverinfo='none'))
+    list_items = [html.Div([html.Span(d.strftime('%Y-%m-%d')), html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#e74c3c'})], style={'padding':'6px 0','borderBottom':'1px solid #111'}) for d in extreme_days.sort_index(ascending=False).index]
+
+    return fig_dist, list_items, paths.tolist(), sim_es, False, 0
+
+# CALLBACK 2: Animação e Linha de ES no final
+@app.callback(
+    [Output('monte-carlo-graph', 'figure'),
+     Output('animation-frame', 'data', allow_duplicate=True),
+     Output('animation-interval', 'disabled', allow_duplicate=True)],
+    [Input('animation-interval', 'n_intervals')],
+    [State('mc-paths-store', 'data'), 
+     State('mc-es-store', 'data'),
+     State('animation-frame', 'data')],
+    prevent_initial_call=True
+)
+def animate_mc(n, paths, sim_es, frame):
+    if paths is None: return no_update
+    paths = np.array(paths)
+    n_sims = paths.shape[1]
     
-    fig.add_trace(go.Scatter(
-        x=x, y=y, mode='markers+text',
-        text=[f"{v:.2f}" for v in df_assets['Stress_Corr']],
-        textposition="middle center",
-        textfont=dict(color='white', size=11, family="Arial Black"),
-        marker=dict(size=55, color='#111', line=dict(width=3, color=[get_color(d) for d in df_assets['Delta']]))
-    ))
+    # Gera um gradiente de cores estilo "rainbow" baseado na escala Spectral
+    colors = px.colors.sample_colorscale("Spectral", [i/(n_sims - 1) for i in range(n_sims)])
     
-    fig.add_trace(go.Scatter(
-        x=x_t, y=y_t, mode='text', text=df_assets['Ticker'],
-        textfont=dict(size=14, color='white', family="Arial Black")
-    ))
+    fig_mc = go.Figure()
     
-    # AAPL Central [cite: 46]
-    fig.add_trace(go.Scatter(x=[0], y=[0], mode='markers+text', text="1.00", textposition="middle center",
-                             marker=dict(size=65, color='red', line=dict(width=3, color='white')),
-                             textfont=dict(color='white', size=12, family="Arial Black")))
+    for i in range(n_sims):
+        fig_mc.add_trace(go.Scatter(
+            y=paths[:frame, i], 
+            mode='lines', 
+            line=dict(width=1.2, color=colors[i]), 
+            opacity=0.7,
+            showlegend=False
+        ))
+
+    if frame >= 30:
+        fig_mc.add_hline(
+            y=1 + sim_es, 
+            line_color="#ffffff", # Branco para contrastar com o arco-íris
+            line_width=2, 
+            line_dash="dash",
+            annotation_text=f"SIMULATED ES: {sim_es:.2%}", 
+            annotation_font_color="#ffffff",
+            annotation_position="bottom left"
+        )
+        fig_mc.update_layout(title="PROJECTION COMPLETE", template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        return fig_mc, frame, True
     
-    fig.update_layout(
-        showlegend=False, margin=dict(t=50, b=0, l=0, r=0),
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.5, 1.5]),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.5, 1.5]),
-        paper_bgcolor='black', plot_bgcolor='black', font_color="white",
-        title="Asset Contagion: Proximity/Thickness = Δρ"
+    fig_mc.update_layout(
+        title=f"SIMULATING PATHS (DAY {frame}/30)", 
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)',
+        xaxis=dict(range=[0, 30], gridcolor='#111'), 
+        yaxis=dict(range=[np.min(paths)*0.95, np.max(paths)*1.05], gridcolor='#111')
     )
-    return fig
 
-def create_map():
-    df_others = df_geo[df_geo['Country'] != 'USA'].copy()
-    df_others['size'] = 14 + (df_others['Delta'].abs() * 60)
-    
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scattergeo(
-        lat=df_others['lat'], lon=df_others['lon'], text=df_others['Country'],
-        marker=dict(
-            size=df_others['size'], color=df_others['Delta'], 
-            colorscale='RdBu_r', cmin=-1, cmax=1, showscale=True, 
-            colorbar=dict(title=dict(text="Δρ Jump", font=dict(color="white")), tickfont=dict(color="white")),
-            line=dict(width=1.5, color='white')
-        ),
-        hovertemplate="<b>%{text}</b><br>Jump Δρ: %{marker.color:.4f}<extra></extra>"
-    ))
-    
-    fig.add_trace(go.Scattergeo(
-        lat=[38.89], lon=[-77.03], 
-        marker=dict(size=35, color='limegreen', line=dict(width=2, color='white')),
-        text="USA (Origin: AAPL)"
-    ))
-    
-    # CORREÇÃO DA PARTE BRANCA AQUI
-    fig.update_geos(
-        projection_type="natural earth",
-        showland=True, landcolor="#1a1a1a",
-        showcountries=True, countrycolor="#444",
-        showocean=True, oceancolor="black",
-        bgcolor="black",     # Remove o fundo branco do "globo"
-        showframe=False      # Remove a moldura branca exterior
-    )
-    
-    fig.update_layout(
-        title="Global Dorling Cartogram",
-        margin=dict(t=50, b=0, l=0, r=0),
-        paper_bgcolor='black', 
-        font_color="white"
-    )
-    return fig
+    return fig_mc, frame + 1, False
 
-# 3. APP DASH
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG])
-
-app.layout = dbc.Container([
-    dbc.Row(dbc.Col(html.H2("SystemicRisk-Net: Extreme Event Dashboard", 
-                           className="text-center my-4", style={'color': 'red', 'fontWeight': 'bold'}))),
-    
-    dbc.Row([
-        dbc.Col(dcc.Graph(figure=create_network(), id='net-graph'), width=6),
-        dbc.Col(dcc.Graph(figure=create_map(), id='map-graph'), width=6)
-    ]),
-    
-    dbc.Row(dbc.Col(html.P("Analysis of Extreme Value Events and Correlation Contagion", 
-                           className="text-center mt-3", style={'color': '#888'})))
-], fluid=True, style={'backgroundColor': 'black', 'minHeight': '100vh'})
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
