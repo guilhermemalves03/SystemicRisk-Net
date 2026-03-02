@@ -12,7 +12,7 @@ external_scripts = ['https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJa
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 engine = SystemicRiskEngine()
-engine.fetch_all_data(period="2y")
+engine.fetch_all_data(period="1y")
 
 LATEX_FONT = dict(family="EB Garamond, serif", size=16)
 
@@ -87,7 +87,7 @@ app.layout = html.Div([
 )
 def setup_analysis(selected_ticker):
     engine.set_main_asset(selected_ticker)
-    extreme_days, var_limit, filtered_returns = engine.get_extreme_events(months=24)
+    extreme_days, var_limit, filtered_returns = engine.get_extreme_events(months=12)
     
     # 1. Gráfico de Distribuição Restaurado
     counts, bin_edges = np.histogram(filtered_returns, bins=80, density=True)
@@ -131,7 +131,7 @@ def setup_analysis(selected_ticker):
     fig_map = go.Figure(go.Scattergeo(
         lat=df_map['Lat'], lon=df_map['Lon'],
         marker=dict(
-            size=np.abs(df_map['$\Delta \\rho$']) * 130 + 12, 
+            size=15, 
             color=df_map['$\Delta \\rho$'], colorscale='RdBu_r', cmid=0,
             showscale=True, colorbar=dict(title=r"$\Delta \rho$", thickness=15),
             line=dict(width=1, color='white')
