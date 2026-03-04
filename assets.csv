@@ -86,23 +86,17 @@ ROG.SW,Roche Holding,Healthcare,Switzerland
 NOVN.SW,Novartis AG,Healthcare,Switzerland
 2330.TW,TSMC,Technology,Taiwan
 005930.KS,Samsung Electronics,Technology,South Korea
-^GSPC,S&P 500,Country,USA
-^IXIC,Nasdaq Composite,Country,USA
-^DJI,Dow Jones Industrial,Country,USA
-^GDAXI,DAX 40,Country,Germany
-^FCHI,CAC 40,Country,France
-^FTSE,FTSE 100,Country,UK
-^N225,Nikkei 225,Country,Japan
-^HSI,Hang Seng Index,Country,Hong Kong
-^BVSP,IBOVESPA,Country,Brazil
-^MXX,IPC Mexico,Country,Mexico
-^BSESN,S&P BSE SENSEX,Country,India
-000001.SS,SSE Composite,Country,China
-^STI,STI Index,Country,Singapore
-^AEX,AEX Index,Country,Netherlands
-^IBEX,IBEX 35,Country,Spain
-^GSPTSE,S&P/TSX Composite,Country,Canada
-^OMX,OMX Stockholm 30,Country,Sweden
-^FTSEMIB.MI,FTSE MIB,Country,Italy
-^SSMI,SMI Index,Country,Switzerland
-^AXJO,S&P/ASX 200,Country,Australia
+EWG,iShares MSCI Germany,Country,Germany
+EWJ,iShares MSCI Japan,Country,Japan
+MCHI,iShares MSCI China,Country,China
+EWA,iShares MSCI Australia,Country,Australia
+EWZ,iShares MSCI Brazil,Country,Brazil
+EWI,iShares MSCI Italy,Country,Italy
+EWM,iShares MSCI Malaysia,Country,Malaysia
+EWS,iShares MSCI Singapore,Country,Singapore
+EWC,iShares MSCI Canada,Country,Canada
+EWQ,iShares MSCI France,Country,France
+EWP,iShares MSCI Spain,Country,Spain
+EWH,iShares MSCI Hong Kong,Country,Hong Kong
+EWD,iShares MSCI Sweden,Country,Sweden
+EWN,iShares MSCI Netherlands,Country,Netherlands
