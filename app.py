@@ -1,27 +1,38 @@
 import dash
 from dash import dcc, html, Input, Output, State, no_update, ALL, callback_context
 import plotly.graph_objects as go
-import plotly.express as px
 import numpy as np
 import pandas as pd
 from scipy.stats import norm, gaussian_kde
 from engine import SystemicRiskEngine
 import json
+from plotly.colors import sample_colorscale
 
 external_stylesheets = ['https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&display=swap']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 engine = SystemicRiskEngine()
-engine.fetch_all_data(period="2y") # Garantir que tens dados suficientes para o período de 1 ano calmo
+engine.fetch_all_data(period="2y")
 
 LATEX_FONT = dict(family="EB Garamond, serif", size=16)
 
 COUNTRY_COORDS = {
-    'USA': [37.0, -95.0], 'Germany': [51.0, 10.0], 'France': [46.0, 2.0],
-    'UK': [55.0, -3.0], 'Japan': [36.0, 138.0], 'Hong Kong': [22.3, 114.1],
-    'Brazil': [-14.0, -51.0], 'Mexico': [23.0, -102.0], 'India': [20.0, 78.0],
-    'China': [35.0, 103.0], 'Singapore': [1.3, 103.8], 'Netherlands': [52.0, 5.0],
-    'Spain': [40.0, -3.0], 'Canada': [56.0, -106.0], 'Sweden': [60.0, 18.0],
-    'Italy': [41.0, 12.0], 'Switzerland': [46.0, 8.0], 'Australia': [-25.0, 133.0]
+    'USA': [37.0, -95.0], 'Germany': [51.0, 10.0], 'Japan': [36.0, 138.0],
+    'China': [35.0, 103.0], 'Australia': [-25.0, 133.0], 'Brazil': [-14.0, -51.0],
+    'Italy': [41.0, 12.0], 'Malaysia': [4.0, 109.0], 'Singapore': [1.3, 103.8],
+    'Canada': [56.0, -106.0], 'France': [46.0, 2.0], 'Spain': [40.0, -3.0],
+    'Hong Kong': [22.3, 114.1], 'Sweden': [60.0, 18.0], 'Netherlands': [52.0, 5.0],
+    'UK': [55.0, -3.0], 'Switzerland': [46.8, 8.2], 'South Korea': [35.9, 127.7],
+    'Taiwan': [23.6, 120.9], 'India': [20.5, 78.9], 'Mexico': [23.6, -102.5],
+    'South Africa': [-30.5, 22.9], 'Saudi Arabia': [23.8, 45.0], 'Turkey': [38.9, 35.2],
+    'Poland': [51.9, 19.1], 'Indonesia': [-0.7, 113.9], 'Thailand': [15.8, 100.9],
+    'Philippines': [12.8, 121.7], 'Vietnam': [14.0, 108.2], 'Chile': [-35.6, -71.5],
+    'Peru': [-9.1, -75.0], 'Colombia': [4.5, -74.0], 'Argentina': [-38.4, -63.6],
+    'Greece': [39.0, 22.0], 'Israel': [31.0, 34.8], 'Egypt': [26.8, 30.8],
+    'Austria': [47.5, 14.5], 'Belgium': [50.5, 4.5], 'Denmark': [56.0, 10.0],
+    'Finland': [61.9, 25.7], 'Ireland': [53.1, -7.7], 'Norway': [60.5, 8.5],
+    'Portugal': [39.4, -8.2], 'New Zealand': [-40.9, 174.8], 'UAE': [23.4, 53.8],
+    'Qatar': [25.3, 51.5], 'Nigeria': [9.1, 8.6], 'Pakistan': [30.4, 69.3],
+    'Kenya': [-1.3, 36.8], 'Morocco': [31.8, -7.1]
 }
 
 options = [{'label': f"{r['name']} ({r['ticker']})", 'value': r['ticker']} 
@@ -39,9 +50,37 @@ explanation_box_style = {
     'fontFamily': '"EB Garamond", "Times New Roman", Times, serif',
     'fontSize': '18px',
     'lineHeight': '1.6',
-    'overflowY': 'auto',
     'boxSizing': 'border-box'
 }
+
+def calculate_dorling_layout(lons, lats, radii, max_iter=300):
+    x, y, r = np.array(lons, dtype=float), np.array(lats, dtype=float), np.array(radii, dtype=float)
+    for _ in range(max_iter):
+        max_overlap = 0
+        for i in range(len(x)):
+            for j in range(i+1, len(x)):
+                dx, dy = x[i] - x[j], y[i] - y[j]
+                dist = np.sqrt(dx**2 + dy**2)
+                min_dist = r[i] + r[j] + 1.0 
+                
+                if dist < min_dist:
+                    overlap = min_dist - dist
+                    max_overlap = max(max_overlap, overlap)
+                    if dist == 0:
+                        dx, dy = np.random.randn(), np.random.randn()
+                        dist = np.sqrt(dx**2 + dy**2)
+                    
+                    push_x = (dx / dist) * overlap * 0.5
+                    push_y = (dy / dist) * overlap * 0.5
+                    x[i] += push_x
+                    y[i] += push_y
+                    x[j] -= push_x
+                    y[j] -= push_y
+                    
+        x += (np.array(lons) - x) * 0.05
+        y += (np.array(lats) - y) * 0.05
+        if max_overlap < 0.1: break
+    return x, y
 
 app.layout = html.Div([
     dcc.Store(id='mc-paths-store'),
@@ -59,15 +98,14 @@ app.layout = html.Div([
 
     dcc.Tabs(id="tabs", value='tab-dist', children=[
         
-        # TAB 1: Distribuição
         dcc.Tab(label='Distribuição', value='tab-dist', children=[
             html.Div([
                 html.Div([
                     html.Div([
                         html.H3("STRESS EVENTS", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                        html.Div(id='extreme-dates-list', style={'height': 'calc(100% - 30px)', 'overflowY': 'auto', 'fontSize': '14px'})
+                        html.Div(id='extreme-dates-list', style={'fontSize': '14px', 'maxHeight': '600px', 'overflowY': 'auto', 'paddingRight': '5px'})
                     ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
-                    html.Div([dcc.Graph(id='distribution-graph', style={'height': '100%'}, mathjax=True)], style={'flex': '1'})
+                    html.Div([dcc.Graph(id='distribution-graph', style={'height': '100%', 'minHeight': '600px'}, mathjax=True)], style={'flex': '1'})
                 ], style={'display': 'flex', 'flex': '1', 'backgroundColor': '#000'}),
                 
                 html.Div([
@@ -85,14 +123,13 @@ O ajuste compara a distribuição histórica com uma Gaussiana teórica para evi
                     """, mathjax=True)
                 ], style=explanation_box_style)
                 
-            ], style={'display': 'flex', 'height': 'calc(100vh - 104px)', 'padding': '15px', 'boxSizing': 'border-box'})
+            ], style={'display': 'flex', 'minHeight': 'calc(100vh - 104px)', 'padding': '15px', 'boxSizing': 'border-box'})
         ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
            selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #e74c3c', 'borderBottom': 'none', 'padding': '10px'}),
 
-        # TAB 2: Monte Carlo
         dcc.Tab(label='Monte Carlo', value='tab-mc', children=[
             html.Div([
-                html.Div([dcc.Graph(id='monte-carlo-graph', style={'height': '100%'}, mathjax=True)], style={'flex': '1', 'backgroundColor': '#000'}),
+                html.Div([dcc.Graph(id='monte-carlo-graph', style={'height': '100%', 'minHeight': '600px'}, mathjax=True)], style={'flex': '1', 'backgroundColor': '#000'}),
                 
                 html.Div([
                     html.H3("DINÂMICA ESTOCÁSTICA", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
@@ -107,18 +144,28 @@ $$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $$
                     """, mathjax=True)
                 ], style=explanation_box_style)
                 
-            ], style={'display': 'flex', 'height': 'calc(100vh - 104px)', 'padding': '15px', 'boxSizing': 'border-box'})
+            ], style={'display': 'flex', 'minHeight': 'calc(100vh - 104px)', 'padding': '15px', 'boxSizing': 'border-box'})
         ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
            selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #3498db', 'borderBottom': 'none', 'padding': '10px'}),
 
-        # TAB 3: Mapa
         dcc.Tab(label='Mapa', value='tab-map', children=[
             html.Div([
                 html.Div([
                     html.Div([
-                        html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                        html.Div(id='extreme-dates-list-map', style={'height': 'calc(100% - 30px)', 'overflowY': 'auto', 'fontSize': '14px'})
-                    ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
+                        html.Div([
+                            html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
+                            # Limite de altura e scroll ativo
+                            html.Div(id='extreme-dates-list-map', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                        ], style={'marginBottom': '20px'}),
+                        
+                        html.Hr(style={'borderColor': '#333', 'margin': '0 0 15px 0', 'width': '100%'}),
+                        
+                        html.Div([
+                            html.H3("SAFE HAVENS", style={'fontSize': '11px', 'color': '#2ecc71', 'marginBottom': '10px'}),
+                            # Limite de altura e scroll ativo (~10 items)
+                            html.Div(id='safe-havens-list', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                        ])
+                    ], style={'width': '250px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
                     
                     html.Div([
                         html.Div([
@@ -129,7 +176,8 @@ $$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $$
                                     {'label': ' ρ (Stress) ', 'value': 'stress'},
                                     {'label': ' ρ (Calmo) ', 'value': 'calm'}
                                 ],
-                                value='delta', inline=True, style={'color': '#fff', 'marginRight': '30px', 'fontSize': '16px'}
+                                value='delta', inline=True, style={'color': '#fff', 'marginRight': '30px', 'fontSize': '15px'},
+                                labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e'}
                             ),
                             html.Span("Período Calmo pré-choque: ", style={'color': '#888', 'fontSize': '14px', 'marginRight': '10px'}),
                             dcc.RadioItems(
@@ -139,39 +187,41 @@ $$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $$
                                     {'label': ' 3 Meses ', 'value': '3M'},
                                     {'label': ' 1 Ano ', 'value': '1Y'}
                                 ],
-                                value='3M', inline=True, style={'color': '#fff', 'fontSize': '16px'}
+                                value='3M', inline=True, style={'color': '#fff', 'fontSize': '15px'},
+                                labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e'}
                             )
                         ], style={'padding': '15px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'alignItems': 'center'}),
                         
-                        dcc.Graph(id='contagion-map', style={'flex': '1', 'height': '100%'}, mathjax=True)
+                        dcc.Graph(id='contagion-map', style={'flex': '1', 'minHeight': '500px'}, mathjax=True)
                     ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
-                    
-                    html.Div([
-                        html.H3("SAFE HAVENS", style={'fontSize': '11px', 'color': '#2ecc71', 'marginBottom': '10px'}),
-                        html.Div(id='safe-havens-list', style={'height': 'calc(100% - 30px)', 'overflowY': 'auto', 'fontSize': '14px'})
-                    ], style={'width': '200px', 'padding': '15px', 'borderLeft': '1px solid #333', 'backgroundColor': '#0a0a0a'})
-                ], style={'display': 'flex', 'flex': '1', 'backgroundColor': '#000'}),
+                ], style={'display': 'flex', 'minHeight': '600px', 'backgroundColor': '#000'}),
                 
                 html.Div([
                     html.H3("RISCO SISTÉMICO", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
                     dcc.Markdown(r"""
+Cartograma de Dorling (Círculos = Volume de transações).
 Análise do contágio em eventos específicos ($\pm 15$ dias). O choque de correlação é definido por:
 
-$$ \Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}} $$
+$$\Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}}$$
 
 Ativos que apresentam $\Delta \rho < 0$ atuam como refúgios (*Safe Havens*) perante quebras do mercado principal. Altera a visualização nos botões superiores.
                     """, mathjax=True)
-                ], style=explanation_box_style)
+                ], style=dict(explanation_box_style, **{
+                    'width': '100%', 
+                    'minWidth': '100%', 
+                    'marginLeft': '0', 
+                    'marginTop': '20px', 
+                    'height': 'auto'
+                }))
                 
-            ], style={'display': 'flex', 'height': 'calc(100vh - 104px)', 'padding': '15px', 'boxSizing': 'border-box'})
+            ], style={'display': 'flex', 'flexDirection': 'column', 'minHeight': 'calc(100vh - 104px)', 'padding': '15px', 'boxSizing': 'border-box'})
         ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
            selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #2ecc71', 'borderBottom': 'none', 'padding': '10px'})
 
     ], style={'height': '44px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333'})
 
-], style={'backgroundColor': '#000', 'color': '#eee', 'fontFamily': '"EB Garamond", serif', 'height': '100vh', 'overflow': 'hidden'})
+], style={'backgroundColor': '#000', 'color': '#eee', 'fontFamily': '"EB Garamond", serif', 'minHeight': '100vh'})
 
-# Captura de Clique nos Eventos de Stress
 @app.callback(
     Output('selected-stress-date', 'data'),
     [Input({'type': 'stress-date-btn', 'date': ALL}, 'n_clicks')],
@@ -185,7 +235,17 @@ def update_selected_date(n_clicks, ids):
         return json.loads(prop_id)['date']
     return no_update
 
-# Análise Principal (Distribuição, Monte Carlo e População das Listas de Stress)
+@app.callback(
+    [Output('animation-interval', 'disabled', allow_duplicate=True),
+     Output('animation-frame', 'data', allow_duplicate=True)],
+    [Input('tabs', 'value')],
+    prevent_initial_call=True
+)
+def auto_play_mc(tab_value):
+    if tab_value == 'tab-mc':
+        return False, 0 
+    return no_update, no_update
+
 @app.callback(
     [Output('distribution-graph', 'figure'),
      Output('extreme-dates-list', 'children'), Output('extreme-dates-list-map', 'children'),
@@ -226,17 +286,15 @@ def setup_analysis(selected_ticker):
 
     list_items_clickable = [
         html.Button(
-            [html.Span(d.strftime('%Y-%m-%d')), html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#e74c3c'})],
+            [html.Span(d.strftime('%Y-%m-%d'), style={'fontWeight': 'bold'}), html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#ff6b6b'})],
             id={'type': 'stress-date-btn', 'date': d.strftime('%Y-%m-%d')},
-            style={'width': '100%', 'backgroundColor': 'transparent', 'border': 'none', 'color': '#eee', 'textAlign': 'left', 'cursor': 'pointer', 'padding': '6px 0', 'borderBottom': '1px solid #222', 'fontFamily': 'inherit', 'fontSize': '14px'}
+            style={'width': '100%', 'backgroundColor': '#1e1e1e', 'border': '1px solid #444', 'borderRadius': '5px', 'color': '#eee', 'textAlign': 'left', 'cursor': 'pointer', 'padding': '8px 10px', 'marginBottom': '6px', 'fontFamily': 'inherit', 'fontSize': '14px'}
         ) for d in extreme_days.sort_index(ascending=False).index
     ]
 
     paths, sim_es = engine.run_monte_carlo(n_sims=80)
     return fig_dist, list_items, list_items_clickable, paths.tolist(), sim_es, False, 0
 
-
-# Atualização do Mapa Interativo
 @app.callback(
     [Output('contagion-map', 'figure'), Output('safe-havens-list', 'children')],
     [Input('selected-stress-date', 'data'), Input('map-vis-type', 'value'), 
@@ -245,8 +303,6 @@ def setup_analysis(selected_ticker):
 def render_map(selected_date, vis_type, calm_period, main_ticker):
     engine.set_main_asset(main_ticker)
     extreme_days, _, _ = engine.get_extreme_events(months=12)
-    
-    # Se não houver data selecionada, assume a queda mais recente
     target_date = selected_date if selected_date else (extreme_days.index[-1].strftime('%Y-%m-%d') if not extreme_days.empty else None)
     
     if not target_date:
@@ -258,51 +314,82 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
     for _, row in country_assets.iterrows():
         metrics = engine.get_event_contagion(row['ticker'], target_date, calm_period)
         if metrics:
-            delta_rho, stress_rho, calm_rho = metrics
+            (delta_rho, stress_rho, calm_rho), (delta_vol, stress_vol, calm_vol) = metrics
             coords = COUNTRY_COORDS.get(row['country'])
             if coords:
                 val = delta_rho if vis_type == 'delta' else (stress_rho if vis_type == 'stress' else calm_rho)
-                map_rows.append({'Val': val, 'Delta': delta_rho, 'Lat': coords[0], 'Lon': coords[1], 'Name': row['name']})
+                vol = abs(delta_vol) if vis_type == 'delta' else (stress_vol if vis_type == 'stress' else calm_vol)
+                map_rows.append({
+                    'Val': val, 
+                    'Vol': vol, 
+                    'Delta': delta_rho, 
+                    'Lat': coords[0], 
+                    'Lon': coords[1], 
+                    'Name': row['name'], 
+                    'Country': row['country'],
+                    'Ticker': row['ticker']
+                })
     
     if not map_rows: return go.Figure(), [html.Div("Dados insuficientes.")]
     
-    df_map = pd.DataFrame(map_rows)
+    v_vals = np.array([row['Vol'] for row in map_rows])
+    v_norm = (v_vals - np.min(v_vals)) / (np.max(v_vals) - np.min(v_vals) + 1e-9)
+    radii = 3.5 + np.sqrt(v_norm) * 14.0 
     
-    title_map = {
-        'delta': rf"$\text{{Contágio no Evento ({target_date}): }} \Delta \rho$",
-        'stress': rf"$\text{{Correlação de Stress ({target_date} }} \pm 15 \text{{ dias)}}$",
-        'calm': rf"$\text{{Correlação Calma ({calm_period} pré-choque)}}$"
-    }
+    lons, lats = [row['Lon'] for row in map_rows], [row['Lat'] for row in map_rows]
+    new_x, new_y = calculate_dorling_layout(lons, lats, radii)
 
-    fig_map = go.Figure(go.Scattergeo(
-        lat=df_map['Lat'], lon=df_map['Lon'],
-        marker=dict(
-            size=15, 
-            color=df_map['Val'], colorscale='RdBu_r', cmid=0, cmin=-1, cmax=1, # <--- CORRIGIDO AQUI
-            showscale=True, colorbar=dict(title=vis_type.upper(), thickness=15),
-            line=dict(width=1, color='white')
-        ),
-        text=[f"{n}<br>Valor: {v:.2f}" for n, v in zip(df_map['Name'], df_map['Val'])]
+    c_vals = np.array([row['Val'] for row in map_rows])
+    c_norm = np.clip((c_vals - (-1.0)) / (1.0 - (-1.0)), 0, 1)
+    colors = sample_colorscale('RdBu_r', c_norm)
+
+    fig_map = go.Figure()
+
+    for i in range(len(map_rows)):
+        t = np.linspace(0, 2*np.pi, 50)
+        cx, cy = new_x[i] + radii[i] * np.cos(t), new_y[i] + radii[i] * np.sin(t)
+        
+        fig_map.add_trace(go.Scatter(
+            x=cx, y=cy, fill='toself', fillcolor=colors[i],
+            line=dict(color='white', width=1.5), mode='lines',
+            name=map_rows[i]['Country'], 
+            text=f"<b>{map_rows[i]['Country']}</b><br>Métrica: {c_vals[i]:.2f}<br>Δ Volume: {v_vals[i]:.2%}",
+            hoverinfo='text', showlegend=False
+        ))
+        
+        fig_map.add_trace(go.Scatter(
+            x=[new_x[i]], y=[new_y[i]], mode='text',
+            text=[map_rows[i]['Ticker']], textfont=dict(color='white', size=11, family="sans-serif"),
+            hoverinfo='skip', showlegend=False
+        ))
+
+    fig_map.add_trace(go.Scatter(
+        x=[None], y=[None], mode='markers',
+        marker=dict(colorscale='RdBu_r', cmin=-1, cmax=1, showscale=True, colorbar=dict(title="ρ", thickness=15)),
+        hoverinfo='none', showlegend=False
     ))
-    fig_map.update_geos(projection_type="natural earth", showland=True, landcolor="#080808", 
-                        oceancolor="#000", showcountries=True, countrycolor="#222", bgcolor="rgba(0,0,0,0)")
-    fig_map.update_layout(title=title_map[vis_type], font=LATEX_FONT, template="plotly_dark", 
-                          margin=dict(l=10, r=10, t=50, b=10), paper_bgcolor='rgba(0,0,0,0)')
+
+    fig_map.update_layout(
+        title=rf"$\text{{Cartograma de Risco Sistémico - }} {target_date}$", 
+        font=LATEX_FONT, template="plotly_dark",
+        xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), 
+        yaxis=dict(visible=False),
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=10, r=10, t=50, b=10)
+    )
 
     safe_havens = sorted([row for row in map_rows if row['Delta'] < 0], key=lambda x: x['Delta'])
     safe_list_items = [
         html.Div([
-            html.Span(sh['Name']), 
+            html.Span(sh['Country']),
             html.Span("{:.2f}".format(sh['Delta']), style={'float':'right','color':'#2ecc71'})
-        ], style={'padding':'4px 0','borderBottom':'1px solid #111'}) 
+        ], style={'padding':'6px 0','borderBottom':'1px solid #222'}) 
         for sh in safe_havens
     ]
     if not safe_list_items: safe_list_items = [html.Div("Sem safe havens.", style={'color': '#777'})]
 
     return fig_map, safe_list_items
 
-
-# Animação Monte Carlo
 @app.callback(
     [Output('monte-carlo-graph', 'figure'), Output('animation-frame', 'data', allow_duplicate=True),
      Output('animation-interval', 'disabled', allow_duplicate=True)],
@@ -360,7 +447,6 @@ def animate_mc(n, paths, sim_es, frame):
                         margin=dict(l=40, r=20, t=50, b=40), xaxis=dict(range=[0, 30]), 
                         yaxis=dict(range=[np.min(paths)*0.95, np.max(paths)*1.05]))
     return fig_mc, frame + 1, False
-
 
 if __name__ == "__main__":
     app.run(debug=True)

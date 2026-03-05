@@ -86,6 +86,7 @@ ROG.SW,Roche Holding,Healthcare,Switzerland
 NOVN.SW,Novartis AG,Healthcare,Switzerland
 2330.TW,TSMC,Technology,Taiwan
 005930.KS,Samsung Electronics,Technology,South Korea
+SPY,SPDR S&P 500,Country,USA
 EWG,iShares MSCI Germany,Country,Germany
 EWJ,iShares MSCI Japan,Country,Japan
 MCHI,iShares MSCI China,Country,China
@@ -100,3 +101,38 @@ EWP,iShares MSCI Spain,Country,Spain
 EWH,iShares MSCI Hong Kong,Country,Hong Kong
 EWD,iShares MSCI Sweden,Country,Sweden
 EWN,iShares MSCI Netherlands,Country,Netherlands
+EWU,iShares MSCI United Kingdom,Country,UK
+EWL,iShares MSCI Switzerland,Country,Switzerland
+EWY,iShares MSCI South Korea,Country,South Korea
+EWT,iShares MSCI Taiwan,Country,Taiwan
+INDA,iShares MSCI India,Country,India
+EWW,iShares MSCI Mexico,Country,Mexico
+EZA,iShares MSCI South Africa,Country,South Africa
+KSA,iShares MSCI Saudi Arabia,Country,Saudi Arabia
+TUR,iShares MSCI Turkey,Country,Turkey
+EPOL,iShares MSCI Poland,Country,Poland
+EIDO,iShares MSCI Indonesia,Country,Indonesia
+THD,iShares MSCI Thailand,Country,Thailand
+EPHE,iShares MSCI Philippines,Country,Philippines
+VNM,VanEck Vietnam ETF,Country,Vietnam
+ECH,iShares MSCI Chile,Country,Chile
+EPU,iShares MSCI Peru,Country,Peru
+GXG,Global X MSCI Colombia,Country,Colombia
+ARGT,Global X MSCI Argentina,Country,Argentina
+GREK,Global X MSCI Greece,Country,Greece
+EIS,iShares MSCI Israel,Country,Israel
+EGPT,VanEck Egypt Index,Country,Egypt
+EWO,iShares MSCI Austria,Country,Austria
+EWK,iShares MSCI Belgium,Country,Belgium
+EDEN,iShares MSCI Denmark,Country,Denmark
+EFNL,iShares MSCI Finland,Country,Finland
+EIRL,iShares MSCI Ireland,Country,Ireland
+ENOR,iShares MSCI Norway,Country,Norway
+PGAL,Global X MSCI Portugal,Country,Portugal
+ENZL,iShares MSCI New Zealand,Country,New Zealand
+UAE,iShares MSCI UAE,Country,UAE
+QAT,iShares MSCI Qatar,Country,Qatar
+NGE,Global X MSCI Nigeria,Country,Nigeria
+PAK,Global X MSCI Pakistan,Country,Pakistan
+AFK,VanEck Africa Index (Proxy),Country,Kenya
+FM,iShares Frontier Markets (Proxy),Country,Morocco
