@@ -113,3 +113,8 @@ class SystemicRiskEngine:
         final_returns = paths[-1] - 1
         sim_es = self.calculate_expected_shortfall(pd.Series(final_returns), alpha=0.01)
         return paths, sim_es
+    
+    def get_realized_volatility(self, ticker, window=21):
+        if self.returns is None or ticker not in self.returns.columns:
+            return None
+        return self.returns[ticker].rolling(window=window).std() * np.sqrt(252)

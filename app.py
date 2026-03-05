@@ -9,7 +9,9 @@ import json
 from plotly.colors import sample_colorscale
 
 external_stylesheets = ['https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&display=swap']
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+external_scripts = ['https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML']
+
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets, external_scripts=external_scripts)
 engine = SystemicRiskEngine()
 engine.fetch_all_data(period="2y")
 
@@ -97,7 +99,6 @@ app.layout = html.Div([
               'padding': '10px 30px', 'borderBottom': '1px solid #333', 'height': '60px'}),
 
     dcc.Tabs(id="tabs", value='tab-dist', children=[
-        
         dcc.Tab(label='Distribuição', value='tab-dist', children=[
             html.Div([
                 html.Div([
@@ -113,11 +114,11 @@ app.layout = html.Div([
                     dcc.Markdown(r"""
 Esta secção modela a densidade empírica dos *log-returns*:
 
-$$ r_t = \ln\left(\frac{P_t}{P_{t-1}}\right) $$
+$ r_t = \ln\left(\frac{P_t}{P_{t-1}}\right) $
 
 O risco de cauda é delimitado pelo **Value at Risk (VaR)** a 99%, definindo a região crítica de perdas extremas:
 
-$$ \Pr(r_t \le -VaR_{0.99}) = 0.01 $$
+$ \Pr(r_t \le -VaR_{0.99}) = 0.01 $
 
 O ajuste compara a distribuição histórica com uma Gaussiana teórica para evidenciar a presença de caudas pesadas (*fat tails*).
                     """, mathjax=True)
@@ -129,18 +130,25 @@ O ajuste compara a distribuição histórica com uma Gaussiana teórica para evi
 
         dcc.Tab(label='Monte Carlo', value='tab-mc', children=[
             html.Div([
-                html.Div([dcc.Graph(id='monte-carlo-graph', style={'height': '100%', 'minHeight': '600px'}, mathjax=True)], style={'flex': '1', 'backgroundColor': '#000'}),
+                html.Div([
+                    dcc.Graph(id='monte-carlo-graph', style={'height': '400px'}, mathjax=True),
+                    html.Div(id='mc-stats-box', style={'flex': '1', 'padding': '20px', 'backgroundColor': '#0a0a0a', 'borderTop': '1px solid #222', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-evenly'}, children=[
+                        html.Div(dcc.Markdown(id='stat-max', mathjax=True, style={'margin': 0}), style={'color': '#2ecc71', 'border': '1px solid #2ecc71', 'padding': '10px 25px', 'borderRadius': '10px', 'backgroundColor': 'rgba(46, 204, 113, 0.05)', 'fontSize': '18px'}),
+                        html.Div(dcc.Markdown(id='stat-mean', mathjax=True, style={'margin': 0}), style={'color': '#f1c40f', 'border': '1px solid #f1c40f', 'padding': '10px 25px', 'borderRadius': '10px', 'backgroundColor': 'rgba(241, 196, 15, 0.05)', 'fontSize': '18px'}),
+                        html.Div(dcc.Markdown(id='stat-min', mathjax=True, style={'margin': 0}), style={'color': '#e74c3c', 'border': '1px solid #e74c3c', 'padding': '10px 25px', 'borderRadius': '10px', 'backgroundColor': 'rgba(231, 76, 60, 0.05)', 'fontSize': '18px'})
+                    ])
+                ], style={'flex': '1', 'backgroundColor': '#000', 'display': 'flex', 'flexDirection': 'column'}),
                 
                 html.Div([
                     html.H3("DINÂMICA ESTOCÁSTICA", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
                     dcc.Markdown(r"""
 Projeção de caminhos gerados através de *bootstrapping* do histórico de retornos empíricos. O processo evolui segundo a dinâmica:
 
-$$ S_T = S_0 \exp\left(\sum_{t=1}^T r_t\right) $$
+$ S_T = S_0 \exp\left(\sum_{t=1}^T r_t\right) $
 
 A banda inferior rastreia dinamicamente o **Expected Shortfall (ES)** a 1%, quantificando o valor esperado da perda severa:
 
-$$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $$
+$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $
                     """, mathjax=True)
                 ], style=explanation_box_style)
                 
@@ -154,7 +162,6 @@ $$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $$
                     html.Div([
                         html.Div([
                             html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                            # Limite de altura e scroll ativo
                             html.Div(id='extreme-dates-list-map', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
                         ], style={'marginBottom': '20px'}),
                         
@@ -162,7 +169,6 @@ $$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $$
                         
                         html.Div([
                             html.H3("SAFE HAVENS", style={'fontSize': '11px', 'color': '#2ecc71', 'marginBottom': '10px'}),
-                            # Limite de altura e scroll ativo (~10 items)
                             html.Div(id='safe-havens-list', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
                         ])
                     ], style={'width': '250px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
@@ -202,9 +208,9 @@ $$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $$
 Cartograma de Dorling (Círculos = Volume de transações).
 Análise do contágio em eventos específicos ($\pm 15$ dias). O choque de correlação é definido por:
 
-$$\Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}}$$
+$ \Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}} $
 
-Ativos que apresentam $\Delta \rho < 0$ atuam como refúgios (*Safe Havens*) perante quebras do mercado principal. Altera a visualização nos botões superiores.
+Ativos que apresentam $ \Delta \rho < 0 $ **e** $ \rho_{\text{stress}} \le 0 $ atuam como refúgios reais (*Safe Havens*) perante quebras do mercado principal.
                     """, mathjax=True)
                 ], style=dict(explanation_box_style, **{
                     'width': '100%', 
@@ -218,9 +224,74 @@ Ativos que apresentam $\Delta \rho < 0$ atuam como refúgios (*Safe Havens*) per
         ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
            selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #2ecc71', 'borderBottom': 'none', 'padding': '10px'})
 
-    ], style={'height': '44px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333'})
+    ], style={'height': '44px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333'}),
+
+    html.Div(id='volatility-modal', style={'display': 'none', 'position': 'fixed', 'zIndex': '1000', 'left': '0', 'top': '0', 'width': '100%', 'height': '100%', 'backgroundColor': 'rgba(0,0,0,0.8)'}, children=[
+        html.Div(style={'position': 'relative', 'margin': '10% auto', 'padding': '20px', 'width': '60%', 'backgroundColor': '#111', 'borderRadius': '10px', 'border': '1px solid #333'}, children=[
+            html.Button('✖', id='close-modal-btn', style={'position': 'absolute', 'right': '15px', 'top': '15px', 'backgroundColor': 'transparent', 'color': '#e74c3c', 'border': 'none', 'fontSize': '20px', 'cursor': 'pointer', 'zIndex': '10'}),
+            dcc.Graph(id='volatility-graph')
+        ])
+    ])
 
 ], style={'backgroundColor': '#000', 'color': '#eee', 'fontFamily': '"EB Garamond", serif', 'minHeight': '100vh'})
+
+
+@app.callback(
+    [Output('volatility-modal', 'style'), Output('volatility-graph', 'figure')],
+    [Input('contagion-map', 'clickData'), Input('close-modal-btn', 'n_clicks')],
+    [State('volatility-modal', 'style'), State('selected-stress-date', 'data')]
+)
+def toggle_modal(clickData, close_clicks, modal_style, selected_date):
+    ctx = callback_context
+    if not ctx.triggered:
+        return no_update, no_update
+    
+    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+    
+    if trigger_id == 'close-modal-btn':
+        modal_style['display'] = 'none'
+        return modal_style, go.Figure()
+        
+    if trigger_id == 'contagion-map' and clickData:
+        try:
+            ticker = clickData['points'][0]['customdata']
+            if isinstance(ticker, list):
+                ticker = ticker[0]
+        except KeyError:
+            return no_update, no_update
+            
+        vol_data = engine.get_realized_volatility(ticker)
+        if vol_data is None: 
+            return no_update, no_update
+        
+        fig = go.Figure(go.Scatter(x=vol_data.index, y=vol_data.values, mode='lines', line=dict(color='#e74c3c', width=2)))
+        
+        # Adicionar a linha e a anotação separadamente para contornar o bug do Plotly com datetimes
+        if selected_date:
+            fig.add_vline(x=selected_date, line_dash="dash", line_color="#39FF14")
+            fig.add_annotation(
+                x=selected_date, 
+                y=0.95, 
+                yref="paper", 
+                text="Stress Event", 
+                showarrow=False, 
+                xanchor="left",
+                font=dict(color="#39FF14", size=14)
+            )
+
+        fig.update_layout(
+            title=rf"$\text{{Volatilidade Realizada Anualizada (21d) - }} {ticker}$", 
+            template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=40, r=20, t=50, b=40),
+            font=LATEX_FONT,
+            yaxis_tickformat='.2%'
+        )
+        
+        modal_style['display'] = 'block'
+        return modal_style, fig
+        
+    return no_update, no_update
+
 
 @app.callback(
     Output('selected-stress-date', 'data'),
@@ -273,7 +344,7 @@ def setup_analysis(selected_ticker):
                                   name='Gaussian', line=dict(color='#777', dash='dash', width=1.5)))
     
     fig_dist.add_vline(x=var_limit, line_dash="dash", line_color="#e74c3c")
-    fig_dist.add_annotation(x=var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {var_limit:.2%}$",
+    fig_dist.add_annotation(x=var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {var_limit*100:.2f}\%$",
                             showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
 
     fig_dist.update_layout(title=rf"$\text{{Return Distribution: }} \text{{{selected_ticker}}}$", 
@@ -322,7 +393,8 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
                 map_rows.append({
                     'Val': val, 
                     'Vol': vol, 
-                    'Delta': delta_rho, 
+                    'Delta': delta_rho,
+                    'Stress': stress_rho,
                     'Lat': coords[0], 
                     'Lon': coords[1], 
                     'Name': row['name'], 
@@ -354,6 +426,7 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
             line=dict(color='white', width=1.5), mode='lines',
             name=map_rows[i]['Country'], 
             text=f"<b>{map_rows[i]['Country']}</b><br>Métrica: {c_vals[i]:.2f}<br>Δ Volume: {v_vals[i]:.2%}",
+            customdata=[map_rows[i]['Ticker']] * len(cx),
             hoverinfo='text', showlegend=False
         ))
         
@@ -378,7 +451,7 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
         margin=dict(l=10, r=10, t=50, b=10)
     )
 
-    safe_havens = sorted([row for row in map_rows if row['Delta'] < 0], key=lambda x: x['Delta'])
+    safe_havens = sorted([row for row in map_rows if row['Delta'] < 0 and row['Stress'] <= 0], key=lambda x: x['Stress'])
     safe_list_items = [
         html.Div([
             html.Span(sh['Country']),
@@ -392,7 +465,8 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
 
 @app.callback(
     [Output('monte-carlo-graph', 'figure'), Output('animation-frame', 'data', allow_duplicate=True),
-     Output('animation-interval', 'disabled', allow_duplicate=True)],
+     Output('animation-interval', 'disabled', allow_duplicate=True), 
+     Output('stat-max', 'children'), Output('stat-mean', 'children'), Output('stat-min', 'children')],
     [Input('animation-interval', 'n_intervals')],
     [State('mc-paths-store', 'data'), State('mc-es-store', 'data'), State('animation-frame', 'data')],
     prevent_initial_call=True
@@ -415,6 +489,15 @@ def animate_mc(n, paths, sim_es, frame):
     x_vals = np.arange(frame + 1)
     base_line = np.ones_like(x_vals) 
     
+    current_vals = current_paths[-1, :] - 1
+    max_val = np.max(current_vals)
+    mean_val = np.mean(current_vals)
+    min_val = np.min(current_vals)
+    
+    str_max = rf"$ \text{{Máximo: }} {max_val*100:+.2f}\% $"
+    str_mean = rf"$ \text{{Médio: }} {mean_val*100:+.2f}\% $"
+    str_min = rf"$ \text{{Pior: }} {min_val*100:+.2f}\% $"
+    
     fig_mc = go.Figure()
     fig_mc.add_trace(go.Scatter(x=x_vals, y=base_line, mode='lines', line=dict(width=0), showlegend=False))
     fig_mc.add_trace(go.Scatter(
@@ -435,18 +518,18 @@ def animate_mc(n, paths, sim_es, frame):
     if frame >= 30:
         final_es_ret = lower_bound[-1] - 1
         fig_mc.add_hline(y=lower_bound[-1], line_dash="dash", line_color="#FF0000",
-                         annotation_text=rf"$ES_{{1\%}} = {final_es_ret:.2%}$", annotation_position="bottom left",
+                         annotation_text=rf"$ES_{{1\%}} = {final_es_ret*100:.2f}\%$", annotation_position="bottom left",
                          annotation_font=dict(color="#FF0000", size=16))
         fig_mc.update_layout(title=r"$\text{Simulated Paths: } S_t = S_0 \exp\left(\sum r_i\right)$", 
                             font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', 
                             plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=40))
-        return fig_mc, frame, True
+        return fig_mc, frame, True, str_max, str_mean, str_min
     
     fig_mc.update_layout(title=f"Monte Carlo Projection (Day {frame}/30)", template="plotly_dark",
                         paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=LATEX_FONT,
                         margin=dict(l=40, r=20, t=50, b=40), xaxis=dict(range=[0, 30]), 
                         yaxis=dict(range=[np.min(paths)*0.95, np.max(paths)*1.05]))
-    return fig_mc, frame + 1, False
+    return fig_mc, frame + 1, False, str_max, str_mean, str_min
 
 if __name__ == "__main__":
     app.run(debug=True)
