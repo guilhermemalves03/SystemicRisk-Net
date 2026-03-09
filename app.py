@@ -9,9 +9,8 @@ import json
 from plotly.colors import sample_colorscale
 
 external_stylesheets = ['https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&display=swap']
-external_scripts = ['https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets, external_scripts=external_scripts)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 engine = SystemicRiskEngine()
 engine.fetch_all_data(period="2y")
 
@@ -99,7 +98,7 @@ app.layout = html.Div([
               'padding': '10px 30px', 'borderBottom': '1px solid #333', 'height': '60px'}),
 
     dcc.Tabs(id="tabs", value='tab-dist', children=[
-        dcc.Tab(label='Distribuição', value='tab-dist', children=[
+        dcc.Tab(label='Distribution', value='tab-dist', children=[
             html.Div([
                 html.Div([
                     html.Div([
@@ -110,17 +109,17 @@ app.layout = html.Div([
                 ], style={'display': 'flex', 'flex': '1', 'backgroundColor': '#000'}),
                 
                 html.Div([
-                    html.H3("METODOLOGIA", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
+                    html.H3("METHODOLOGY", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
                     dcc.Markdown(r"""
-Esta secção modela a densidade empírica dos *log-returns*:
+This section models the empirical density of *log-returns*:
 
-$ r_t = \ln\left(\frac{P_t}{P_{t-1}}\right) $
+$$r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)$$
 
-O risco de cauda é delimitado pelo **Value at Risk (VaR)** a 99%, definindo a região crítica de perdas extremas:
+The tail risk is bounded by the **Value at Risk (VaR)** at 99%, defining the critical region of extreme losses:
 
-$ \Pr(r_t \le -VaR_{0.99}) = 0.01 $
+$$\Pr(r_t \le -VaR_{0.99}) = 0.01$$
 
-O ajuste compara a distribuição histórica com uma Gaussiana teórica para evidenciar a presença de caudas pesadas (*fat tails*).
+The fit compares the historical distribution with a theoretical Gaussian to highlight the presence of heavy tails (*fat tails*).
                     """, mathjax=True)
                 ], style=explanation_box_style)
                 
@@ -140,15 +139,15 @@ O ajuste compara a distribuição histórica com uma Gaussiana teórica para evi
                 ], style={'flex': '1', 'backgroundColor': '#000', 'display': 'flex', 'flexDirection': 'column'}),
                 
                 html.Div([
-                    html.H3("DINÂMICA ESTOCÁSTICA", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
+                    html.H3("STOCHASTIC DYNAMICS", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
                     dcc.Markdown(r"""
-Projeção de caminhos gerados através de *bootstrapping* do histórico de retornos empíricos. O processo evolui segundo a dinâmica:
+Projection of paths generated through *bootstrapping* the historical empirical returns. The process evolves according to the dynamics:
 
-$ S_T = S_0 \exp\left(\sum_{t=1}^T r_t\right) $
+$$S_T = S_0 \exp\left(\sum_{t=1}^T r_t\right)$$
 
-A banda inferior rastreia dinamicamente o **Expected Shortfall (ES)** a 1%, quantificando o valor esperado da perda severa:
+The lower band dynamically tracks the **Expected Shortfall (ES)** at 1%, quantifying the expected value of severe loss:
 
-$ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $
+$$ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}]$$
                     """, mathjax=True)
                 ], style=explanation_box_style)
                 
@@ -156,7 +155,7 @@ $ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $
         ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
            selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #3498db', 'borderBottom': 'none', 'padding': '10px'}),
 
-        dcc.Tab(label='Mapa', value='tab-map', children=[
+        dcc.Tab(label='Map', value='tab-map', children=[
             html.Div([
                 html.Div([
                     html.Div([
@@ -177,21 +176,23 @@ $ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $
                         html.Div([
                             dcc.RadioItems(
                                 id='map-vis-type',
+                                className='custom-radio',
                                 options=[
-                                    {'label': ' Δρ (Salto) ', 'value': 'delta'},
+                                    {'label': ' Δρ (Shock) ', 'value': 'delta'},
                                     {'label': ' ρ (Stress) ', 'value': 'stress'},
-                                    {'label': ' ρ (Calmo) ', 'value': 'calm'}
+                                    {'label': ' ρ (Calm) ', 'value': 'calm'}
                                 ],
                                 value='delta', inline=True, style={'color': '#fff', 'marginRight': '30px', 'fontSize': '15px'},
                                 labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e'}
                             ),
-                            html.Span("Período Calmo pré-choque: ", style={'color': '#888', 'fontSize': '14px', 'marginRight': '10px'}),
+                            html.Span("Pre-shock Calm Period: ", style={'color': '#888', 'fontSize': '14px', 'marginRight': '10px'}),
                             dcc.RadioItems(
                                 id='calm-period-selector',
+                                className='custom-radio',
                                 options=[
-                                    {'label': ' 1 Mês ', 'value': '1M'},
-                                    {'label': ' 3 Meses ', 'value': '3M'},
-                                    {'label': ' 1 Ano ', 'value': '1Y'}
+                                    {'label': ' 1 Month ', 'value': '1M'},
+                                    {'label': ' 3 Months ', 'value': '3M'},
+                                    {'label': ' 1 Year ', 'value': '1Y'}
                                 ],
                                 value='3M', inline=True, style={'color': '#fff', 'fontSize': '15px'},
                                 labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e'}
@@ -202,15 +203,17 @@ $ ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}] $
                     ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
                 ], style={'display': 'flex', 'minHeight': '600px', 'backgroundColor': '#000'}),
                 
+                html.Div("↓ SCROLL DOWN FOR MORE ↓", className='scroll-indicator'),
+
                 html.Div([
-                    html.H3("RISCO SISTÉMICO", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
+                    html.H3("SYSTEMIC RISK", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
                     dcc.Markdown(r"""
-Cartograma de Dorling (Círculos = Volume de transações).
-Análise do contágio em eventos específicos ($\pm 15$ dias). O choque de correlação é definido por:
+Dorling Cartogram (Circles = Trading Volume).
+Contagion analysis on specific events ($\pm 15$ days). The correlation shock is defined by:
 
-$ \Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}} $
+$$\Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}}$$
 
-Ativos que apresentam $ \Delta \rho < 0 $ **e** $ \rho_{\text{stress}} \le 0 $ atuam como refúgios reais (*Safe Havens*) perante quebras do mercado principal.
+Assets that exhibit $\Delta \rho < 0$ **and** $\rho_{\text{stress}} \le 0$ act as true *Safe Havens* during main market crashes.
                     """, mathjax=True)
                 ], style=dict(explanation_box_style, **{
                     'width': '100%', 
@@ -266,7 +269,6 @@ def toggle_modal(clickData, close_clicks, modal_style, selected_date):
         
         fig = go.Figure(go.Scatter(x=vol_data.index, y=vol_data.values, mode='lines', line=dict(color='#e74c3c', width=2)))
         
-        # Adicionar a linha e a anotação separadamente para contornar o bug do Plotly com datetimes
         if selected_date:
             fig.add_vline(x=selected_date, line_dash="dash", line_color="#39FF14")
             fig.add_annotation(
@@ -280,7 +282,7 @@ def toggle_modal(clickData, close_clicks, modal_style, selected_date):
             )
 
         fig.update_layout(
-            title=rf"$\text{{Volatilidade Realizada Anualizada (21d) - }} {ticker}$", 
+            title=rf"$\text{{Annualized Realized Volatility (21d) - }} {ticker}$", 
             template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=40, r=20, t=50, b=40),
             font=LATEX_FONT,
@@ -377,7 +379,7 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
     target_date = selected_date if selected_date else (extreme_days.index[-1].strftime('%Y-%m-%d') if not extreme_days.empty else None)
     
     if not target_date:
-        return go.Figure(), [html.Div("Dados insuficientes.")]
+        return go.Figure(), [html.Div("Insufficient data.")]
 
     country_assets = engine.assets_df[engine.assets_df['sector'] == 'Country']
     map_rows = []
@@ -402,7 +404,7 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
                     'Ticker': row['ticker']
                 })
     
-    if not map_rows: return go.Figure(), [html.Div("Dados insuficientes.")]
+    if not map_rows: return go.Figure(), [html.Div("Insufficient data.")]
     
     v_vals = np.array([row['Vol'] for row in map_rows])
     v_norm = (v_vals - np.min(v_vals)) / (np.max(v_vals) - np.min(v_vals) + 1e-9)
@@ -425,7 +427,7 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
             x=cx, y=cy, fill='toself', fillcolor=colors[i],
             line=dict(color='white', width=1.5), mode='lines',
             name=map_rows[i]['Country'], 
-            text=f"<b>{map_rows[i]['Country']}</b><br>Métrica: {c_vals[i]:.2f}<br>Δ Volume: {v_vals[i]:.2%}",
+            text=f"<b>{map_rows[i]['Country']}</b><br>Metric: {c_vals[i]:.2f}<br>Δ Volume: {v_vals[i]:.2%}",
             customdata=[map_rows[i]['Ticker']] * len(cx),
             hoverinfo='text', showlegend=False
         ))
@@ -443,7 +445,7 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
     ))
 
     fig_map.update_layout(
-        title=rf"$\text{{Cartograma de Risco Sistémico - }} {target_date}$", 
+        title=rf"$\text{{Systemic Risk Cartogram - }} {target_date}$", 
         font=LATEX_FONT, template="plotly_dark",
         xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), 
         yaxis=dict(visible=False),
@@ -459,7 +461,7 @@ def render_map(selected_date, vis_type, calm_period, main_ticker):
         ], style={'padding':'6px 0','borderBottom':'1px solid #222'}) 
         for sh in safe_havens
     ]
-    if not safe_list_items: safe_list_items = [html.Div("Sem safe havens.", style={'color': '#777'})]
+    if not safe_list_items: safe_list_items = [html.Div("No safe havens.", style={'color': '#777'})]
 
     return fig_map, safe_list_items
 
@@ -494,9 +496,9 @@ def animate_mc(n, paths, sim_es, frame):
     mean_val = np.mean(current_vals)
     min_val = np.min(current_vals)
     
-    str_max = rf"$ \text{{Máximo: }} {max_val*100:+.2f}\% $"
-    str_mean = rf"$ \text{{Médio: }} {mean_val*100:+.2f}\% $"
-    str_min = rf"$ \text{{Pior: }} {min_val*100:+.2f}\% $"
+    str_max = rf"$\text{{Max: }} {max_val*100:+.2f}\%$"
+    str_mean = rf"$\text{{Mean: }} {mean_val*100:+.2f}\%$"
+    str_min = rf"$\text{{Worst: }} {min_val*100:+.2f}\%$"
     
     fig_mc = go.Figure()
     fig_mc.add_trace(go.Scatter(x=x_vals, y=base_line, mode='lines', line=dict(width=0), showlegend=False))
@@ -532,4 +534,4 @@ def animate_mc(n, paths, sim_es, frame):
     return fig_mc, frame + 1, False, str_max, str_mean, str_min
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
