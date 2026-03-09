@@ -103,9 +103,13 @@ app.layout = html.Div([
                 html.Div([
                     html.Div([
                         html.H3("STRESS EVENTS", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                        html.Div(id='extreme-dates-list', style={'fontSize': '14px', 'maxHeight': '600px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                        html.Div(id='extreme-dates-list', style={'fontSize': '14px', 'maxHeight': '800px', 'overflowY': 'auto', 'paddingRight': '5px'})
                     ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
-                    html.Div([dcc.Graph(id='distribution-graph', style={'height': '100%', 'minHeight': '600px'}, mathjax=True)], style={'flex': '1'})
+                    
+                    html.Div([
+                        dcc.Graph(id='distribution-graph', style={'flex': '1', 'minHeight': '400px'}, mathjax=True),
+                        dcc.Graph(id='ridgeline-graph', style={'flex': '1', 'minHeight': '500px', 'borderTop': '1px solid #222'}, mathjax=True)
+                    ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'})
                 ], style={'display': 'flex', 'flex': '1', 'backgroundColor': '#000'}),
                 
                 html.Div([
@@ -119,7 +123,7 @@ The tail risk is bounded by the **Value at Risk (VaR)** at 99%, defining the cri
 
 $$\Pr(r_t \le -VaR_{0.99}) = 0.01$$
 
-The fit compares the historical distribution with a theoretical Gaussian to highlight the presence of heavy tails (*fat tails*).
+The Ridgeline Plot models the density KDE over the last 12 months, split by quarters.
                     """, mathjax=True)
                 ], style=explanation_box_style)
                 
@@ -321,6 +325,7 @@ def auto_play_mc(tab_value):
 
 @app.callback(
     [Output('distribution-graph', 'figure'),
+     Output('ridgeline-graph', 'figure'),
      Output('extreme-dates-list', 'children'), Output('extreme-dates-list-map', 'children'),
      Output('mc-paths-store', 'data'), Output('mc-es-store', 'data'), 
      Output('animation-interval', 'disabled'), Output('animation-frame', 'data')],
@@ -330,6 +335,7 @@ def setup_analysis(selected_ticker):
     engine.set_main_asset(selected_ticker)
     extreme_days, var_limit, filtered_returns = engine.get_extreme_events(months=12)
     
+    # --- 1. Static Distribution Graph ---
     counts, bin_edges = np.histogram(filtered_returns, bins=80, density=True)
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
     
@@ -349,10 +355,64 @@ def setup_analysis(selected_ticker):
     fig_dist.add_annotation(x=var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {var_limit*100:.2f}\%$",
                             showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
 
-    fig_dist.update_layout(title=rf"$\text{{Return Distribution: }} \text{{{selected_ticker}}}$", 
+    fig_dist.update_layout(title=rf"$\text{{Aggregated Return Distribution: }} \text{{{selected_ticker}}}$", 
                           font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', 
-                          plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=40), xaxis_title=r"$\Delta \ln(P_t)$")
+                          plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$")
 
+    # --- 2. Classic 2D Ridgeline Plot (Joyplot Reference) ---
+    fig_ridge = go.Figure()
+    df_returns = pd.DataFrame({'return': filtered_returns})
+    df_returns['Month'] = df_returns.index.to_period('M')
+    
+    unique_months = df_returns['Month'].unique()[-12:] 
+    
+    # Escala de cores para distinguir
+    colors = sample_colorscale('Aggrnyl', np.linspace(0, 1, len(unique_months)))
+    
+    for i, month in enumerate(unique_months):
+        month_data = df_returns[df_returns['Month'] == month]['return']
+        if len(month_data) > 2:
+            m_ret = month_data.mean()
+            q_str = f"Q{month.quarter}"
+            month_label = f"{month.strftime('%b %Y')} ({q_str})"
+            
+            # Adiciona o gráfico de violino horizontal com largura > 1 para forçar a sobreposição
+            fig_ridge.add_trace(go.Violin(
+                x=month_data,
+                y=[month_label] * len(month_data),
+                name=month_label,
+                line_color='white',
+                line_width=1,
+                fillcolor=colors[i],
+                opacity=0.9,
+                side='positive',
+                width=3.5,  # Controla o quanto se sobrepõem
+                orientation='h',
+                points=False,
+                showlegend=False
+            ))
+            
+            # Adiciona a caixa com a média flutuante
+            fig_ridge.add_annotation(
+                x=m_ret,
+                y=month_label,
+                text=f"μ: {m_ret*100:.2f}%",
+                showarrow=False,
+                yshift=18, # Sobe a caixa ligeiramente acima da base
+                bgcolor="rgba(0,0,0,0.7)",
+                bordercolor=colors[i],
+                font=dict(color="white", size=11, family="sans-serif")
+            )
+
+    fig_ridge.update_layout(
+        title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$",
+        xaxis_title=r"$\Delta \ln(P_t)$",
+        font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=20, t=30, b=40),
+        violingap=0, violingroupgap=0, violinmode='overlay' # Crucial para o efeito cascata
+    )
+
+    # --- 3. Extra Setup Logic ---
     list_items = [html.Div([html.Span(d.strftime('%Y-%m-%d')), html.Span(f" {extreme_days[d]:.2%}", 
                   style={'float':'right','color':'#e74c3c'})], style={'padding':'4px 0','borderBottom':'1px solid #111'}) 
                   for d in extreme_days.sort_index(ascending=False).index]
@@ -366,7 +426,7 @@ def setup_analysis(selected_ticker):
     ]
 
     paths, sim_es = engine.run_monte_carlo(n_sims=80)
-    return fig_dist, list_items, list_items_clickable, paths.tolist(), sim_es, False, 0
+    return fig_dist, fig_ridge, list_items, list_items_clickable, paths.tolist(), sim_es, False, 0
 
 @app.callback(
     [Output('contagion-map', 'figure'), Output('safe-havens-list', 'children')],
