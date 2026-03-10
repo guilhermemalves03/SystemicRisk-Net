@@ -1,0 +1,23 @@
+.custom-radio input[type="radio"] {
+    display: none;
+}
+.custom-radio input[type="radio"]:checked + span {
+    color: #39FF14;
+    font-weight: bold;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+.scroll-indicator {
+    text-align: center;
+    color: #39FF14;
+    font-size: 14px;
+    letter-spacing: 2px;
+    padding: 10px 0;
+    animation: bounce 2s infinite;
+    width: 100%;
+}

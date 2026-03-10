@@ -23,10 +23,10 @@ class SystemicRiskEngine:
             self.prices = raw_data[['Close']].rename(columns={'Close': self.tickers[0]})
             self.volume = raw_data[['Volume']].rename(columns={'Volume': self.tickers[0]})
             
-        # CORREÇÃO: Propagar o último preço válido para preencher feriados locais (ffill)
+        
         self.prices = self.prices.ffill()
         
-        # CORREÇÃO: Apenas dropar a linha se TODOS os ativos estiverem NaN nesse dia
+        
         self.returns = np.log(self.prices / self.prices.shift(1)).dropna(how='all')
         return self.returns
             
@@ -42,10 +42,10 @@ class SystemicRiskEngine:
 
     
 
-    def get_extreme_events(self, months=12, threshold=0.01): # Mudei para 0.05 (VaR 95%) para teres mais eventos, muda para 0.01 se quiseres manter 99%
+    def get_extreme_events(self, months=12, threshold=0.01): 
         if self.main_returns is None: return pd.Series(), 0, pd.Series()
         
-        # Filtrar valores NaN apenas do ativo principal para não falhar os quantis
+        
         main_clean = self.main_returns.dropna() 
         filtered = main_clean.tail(int(months * 21)) 
         
@@ -96,7 +96,7 @@ class SystemicRiskEngine:
         
         delta_vol = (stress_vol_other / calm_vol_other) - 1 if calm_vol_other > 0 else 0
         
-        # Agora devolve 2 blocos separados: (Métricas de Correlação) e (Métricas de Volume)
+        
         return (stress_corr - calm_corr, stress_corr, calm_corr), (delta_vol, stress_vol_other, calm_vol_other)
 
     def calculate_expected_shortfall(self, returns_series, alpha=0.01):

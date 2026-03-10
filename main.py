@@ -8,11 +8,9 @@ external_stylesheets = ['https://fonts.googleapis.com/css2?family=EB+Garamond:wg
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = "Quant Risk Terminal"
 
-# Inicializar motor quant
 engine = SystemicRiskEngine()
 engine.fetch_all_data(period="2y")
 
-# Injetar dependências
 app.layout = get_layout(engine)
 register_callbacks(app, engine)
 
