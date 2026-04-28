@@ -28,11 +28,103 @@ explanation_box_style = {
     'fontSize': '18px', 'lineHeight': '1.6', 'boxSizing': 'border-box'
 }
 
+story_style = {
+    'height': '100vh', 
+    'display': 'flex', 
+    'flexDirection': 'column', 
+    'justifyContent': 'center', 
+    'alignItems': 'center',
+    'padding': '0 20%',
+    'textAlign': 'center',
+    'scrollSnapAlign': 'start',
+    'borderBottom': '1px solid #111',
+    'position': 'relative'
+}
+
+story_sections = html.Div([
+    html.Div([
+        html.H1("Systemic Risk-Net", style={'color': '#e74c3c', 'fontSize': '3.5em', 'marginBottom': '20px'}),
+        html.P("This dashboard helps the investor to not lose money in extreme financial losses", style={'color':'#e74c3c', 'fontSize': '1.8em'}),
+        html.A("ENTER THE DASHBOARD", href="#main-dashboard", style={'marginTop': '60px', 'color': '#000', 'backgroundColor': '#39FF14', 'textDecoration': 'none', 'fontSize': '1.2em', 'fontWeight': 'bold', 'padding': '15px 30px', 'borderRadius': '5px', 'transition': '0.3s'}),
+        html.P("But how? Lets look at Apple stocks example.", style={'color': '#888', 'marginTop': '20px', 'fontSize': '1.2em'}),
+        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555'})
+    ], style=story_style),
+    
+    html.Div([
+        # Coluna Esquerda: Gráfico
+        html.Div([
+            dcc.Graph(id='intro-apple-dist', config={'displayModeBar': False}, style={'height': '550px', 'width': '100%'}),
+            html.Button("ZOOM: LEFT TAIL", id='zoom-btn-intro', n_clicks=0, 
+                style={
+                    'marginTop': '20px', 'backgroundColor': 'transparent', 
+                    'color': '#39FF14', 'border': '1px solid #39FF14', 
+                    'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px'
+                })
+        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+        # Coluna Direita: Texto e Eventos
+        html.Div([
+            html.H1("What is an Extreme Event?", style={'color': '#f1c40f', 'fontSize': '3.5em', 'marginBottom': '20px', 'textAlign': 'left'}),
+            html.P("For simple context, extreme events is when the stock price decreases a lot from one day to the other. Formaly we can visualize the distribution and see the left side (losses)", style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),
+            
+            html.Div([
+                html.Div("Left side tail Extreme Events from the last 2 years: Apple (AAPL)", style={'color': '#fff', 'fontSize': '1.3em', 'marginBottom': '15px', 'fontWeight': 'bold'}),
+                
+                html.Div([
+                    html.Span("2026-04-03", style={'color': '#bbb', 'display': 'inline-block', 'width': '120px'}),
+                    html.Span("-5.13%", style={'color': '#e74c3c', 'fontWeight': 'bold', 'display': 'inline-block', 'width': '80px'}),
+                    html.Span("U.S. tariffs announcement", style={'color': '#fff'})
+                    
+                ], style={'fontSize': '1.2em', 'margin': '10px 0', 'textAlign': 'left'}),
+                
+                html.Div([
+                    html.Span("2026-04-04", style={'color': '#bbb', 'display': 'inline-block', 'width': '120px'}),
+                    html.Span("-3.52%", style={'color': '#e74c3c', 'fontWeight': 'bold', 'display': 'inline-block', 'width': '80px'}),
+                    html.Span("Global risk aversion", style={'color': '#fff'})
+                ], style={'fontSize': '1.2em', 'margin': '10px 0', 'textAlign': 'left'}),
+                
+                html.Div([
+                    html.Span("2025-10-10", style={'color': '#bbb', 'display': 'inline-block', 'width': '120px'}),
+                    html.Span("-3.51%", style={'color': '#e74c3c', 'fontWeight': 'bold', 'display': 'inline-block', 'width': '80px'}),
+                    html.Span("Tariffs on China", style={'color': '#fff'}),
+                    html.Span("Lets focus on this example", style={'color': '#39FF14', 'fontWeight': 'bold', 'display': 'inline-block', 'marginLeft': '20px'})
+                ], style={'fontSize': '1.2em', 'margin': '10px 0', 'textAlign': 'left'})
+            ], style={'backgroundColor': '#0a0a0a', 'padding': '25px', 'borderRadius': '10px', 'border': '1px solid #333', 'marginTop': '30px', 'width': '100%'}),
+        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+
+        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
+    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
+
+    html.Div([
+        # Coluna Esquerda: Texto + Tabela de Impacto
+        html.Div([
+            html.H1("How can we understand the nature of these events?", style={'color': '#2ecc71', 'fontSize': '3.5em', 'marginBottom': '20px', 'textAlign': 'left'}),
+            html.P("Every analyst has access to news, but there are hidden impacts across sectors and borders. In this specific shock, the Asian market's linkage to Apple reached extreme levels.", style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),
+            
+            # Tabela de Valores (Preenchida via Callback)
+            html.Div(id='asia-impact-table', style={'marginTop': '30px', 'width': '100%'}),
+            
+        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+
+        # Coluna Direita: Mapa + Botão Zoom
+        html.Div([
+            dcc.Graph(id='intro-contagion-map', config={'displayModeBar': False}, style={'height': '550px', 'width': '100%'}),
+            html.Button("ZOOM: ASIA FOCUS", id='zoom-asia-btn', n_clicks=0, 
+                        style={
+                            'marginTop': '20px', 'backgroundColor': 'transparent', 
+                            'color': '#2ecc71', 'border': '1px solid #2ecc71', 
+                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px'
+                        })
+        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+
+        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
+    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
+])
+
 def get_layout(engine):
     options = [{'label': f"{r['name']} ({r['ticker']})", 'value': r['ticker']} 
                for _, r in engine.assets_df[engine.assets_df['sector'] != 'Country'].iterrows()]
 
-    return html.Div([
+    dashboard_layout = html.Div([
         dcc.Store(id='mc-paths-store'),
         dcc.Store(id='mc-es-store'),
         dcc.Store(id='animation-frame', data=0),
@@ -56,8 +148,8 @@ def get_layout(engine):
                         ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
                         
                         html.Div([
-                            dcc.Graph(id='distribution-graph', style={'flex': '1', 'minHeight': '400px'}, mathjax=True),
-                            dcc.Graph(id='ridgeline-graph', style={'flex': '1', 'minHeight': '500px', 'borderTop': '1px solid #222'}, mathjax=True)
+                            dcc.Graph(id='distribution-graph', style={'flex': '1', 'minHeight': '400px'}, mathjax=True, config={'displayModeBar': False}),
+                            dcc.Graph(id='ridgeline-graph', style={'flex': '1', 'minHeight': '500px', 'borderTop': '1px solid #222'}, mathjax=True, config={'displayModeBar': False})
                         ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'})
                     ], style={'display': 'flex', 'flex': '1', 'backgroundColor': '#000'}),
                     
@@ -83,10 +175,10 @@ The Ridgeline Plot models the density KDE over the last 12 months, split by quar
             dcc.Tab(label='Monte Carlo', value='tab-mc', children=[
                 html.Div([
                     html.Div([
-                        dcc.Graph(id='monte-carlo-graph', style={'height': '400px'}, mathjax=True),
+                        dcc.Graph(id='monte-carlo-graph', style={'height': '400px'}, mathjax=True, config={'displayModeBar': False}),
                         html.Div(id='mc-stats-box', style={'flex': '1', 'padding': '20px', 'backgroundColor': '#0a0a0a', 'borderTop': '1px solid #222', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-evenly'}, children=[
                             html.Div(dcc.Markdown(id='stat-max', mathjax=True, style={'margin': 0}), style={'color': '#2ecc71', 'border': '1px solid #2ecc71', 'padding': '10px 25px', 'borderRadius': '10px', 'backgroundColor': 'rgba(46, 204, 113, 0.05)', 'fontSize': '18px'}),
-                            html.Div(dcc.Markdown(id='stat-mean', mathjax=True, style={'margin': 0}), style={'color': '#f1c40f', 'border': '1px solid #f1c40f', 'padding': '10px 25px', 'borderRadius': '10px', 'backgroundColor': 'rgba(241, 196, 15, 0.05)', 'fontSize': '18px'}),
+                            html.Div(dcc.Markdown(id='stat-mean', mathjax=True, style={'margin': 0}), style={'color': "#ffffff", 'border': '1px solid #f1c40f', 'padding': '10px 25px', 'borderRadius': '10px', 'backgroundColor': 'rgba(241, 196, 15, 0.05)', 'fontSize': '18px'}),
                             html.Div(dcc.Markdown(id='stat-min', mathjax=True, style={'margin': 0}), style={'color': '#e74c3c', 'border': '1px solid #e74c3c', 'padding': '10px 25px', 'borderRadius': '10px', 'backgroundColor': 'rgba(231, 76, 60, 0.05)', 'fontSize': '18px'})
                         ])
                     ], style={'flex': '1', 'backgroundColor': '#000', 'display': 'flex', 'flexDirection': 'column'}),
@@ -152,11 +244,9 @@ $$ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}]$$
                                 )
                             ], style={'padding': '15px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'alignItems': 'center'}),
                             
-                            dcc.Graph(id='contagion-map', style={'flex': '1', 'minHeight': '500px'}, mathjax=True)
+                            dcc.Graph(id='contagion-map', style={'flex': '1', 'minHeight': '500px'}, mathjax=True, config={'displayModeBar': False})
                         ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
                     ], style={'display': 'flex', 'minHeight': '600px', 'backgroundColor': '#000'}),
-                    
-                    html.Div("↓ SCROLL DOWN FOR MORE ↓", className='scroll-indicator'),
 
                     html.Div([
                         html.H3("SYSTEMIC RISK", style={'color': '#39FF14', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
@@ -185,8 +275,20 @@ Assets that exhibit $\Delta \rho < 0$ **and** $\rho_{\text{stress}} \le 0$ act a
         html.Div(id='volatility-modal', style={'display': 'none', 'position': 'fixed', 'zIndex': '1000', 'left': '0', 'top': '0', 'width': '100%', 'height': '100%', 'backgroundColor': 'rgba(0,0,0,0.8)'}, children=[
             html.Div(style={'position': 'relative', 'margin': '10% auto', 'padding': '20px', 'width': '60%', 'backgroundColor': '#111', 'borderRadius': '10px', 'border': '1px solid #333'}, children=[
                 html.Button('✖', id='close-modal-btn', style={'position': 'absolute', 'right': '15px', 'top': '15px', 'backgroundColor': 'transparent', 'color': '#e74c3c', 'border': 'none', 'fontSize': '20px', 'cursor': 'pointer', 'zIndex': '10'}),
-                dcc.Graph(id='volatility-graph')
+                dcc.Graph(id='volatility-graph', config={'displayModeBar': False})
             ])
         ])
 
-    ], style={'backgroundColor': '#000', 'color': '#eee', 'fontFamily': '"EB Garamond", serif', 'minHeight': '100vh'})
+    ], id='main-dashboard', style={'scrollSnapAlign': 'start', 'minHeight': '100vh'})
+
+    return html.Div([
+        story_sections,
+        dashboard_layout
+    ], style={
+        'height': '100vh', 
+        'overflowY': 'scroll', 
+        'scrollSnapType': 'y mandatory',
+        'backgroundColor': '#000',
+        'fontFamily': '"EB Garamond", serif',
+        'scrollBehavior': 'smooth'
+    })

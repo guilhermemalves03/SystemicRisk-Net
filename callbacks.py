@@ -91,7 +91,7 @@ def register_callbacks(app, engine):
         return no_update, no_update
 
     @app.callback(
-        [Output('distribution-graph', 'figure'), Output('ridgeline-graph', 'figure'),
+        [Output('intro-apple-dist', 'figure'), Output('distribution-graph', 'figure'), Output('ridgeline-graph', 'figure'),
          Output('extreme-dates-list', 'children'), Output('extreme-dates-list-map', 'children'),
          Output('mc-paths-store', 'data'), Output('mc-es-store', 'data'), 
          Output('animation-interval', 'disabled'), Output('animation-frame', 'data')],
@@ -141,7 +141,122 @@ def register_callbacks(app, engine):
         list_items_clickable = [html.Button([html.Span(d.strftime('%Y-%m-%d'), style={'fontWeight': 'bold'}), html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#ff6b6b'})], id={'type': 'stress-date-btn', 'date': d.strftime('%Y-%m-%d')}, style={'width': '100%', 'backgroundColor': '#1e1e1e', 'border': '1px solid #444', 'borderRadius': '5px', 'color': '#eee', 'textAlign': 'left', 'cursor': 'pointer', 'padding': '8px 10px', 'marginBottom': '6px', 'fontFamily': 'inherit', 'fontSize': '14px'}) for d in extreme_days.sort_index(ascending=False).index]
 
         paths, sim_es = engine.run_monte_carlo(n_sims=80)
-        return fig_dist, fig_ridge, list_items, list_items_clickable, paths.tolist(), sim_es, False, 0
+        return fig_dist, fig_dist, fig_ridge, list_items, list_items_clickable, paths.tolist(), sim_es, False, 0
+
+    @app.callback(
+        Output('intro-apple-dist', 'figure', allow_duplicate=True),
+        [Input('zoom-btn-intro', 'n_clicks')],
+        [State('intro-apple-dist', 'figure')],
+        prevent_initial_call=True
+    )
+    def toggle_intro_zoom(n_clicks, fig):
+        if fig is None: return no_update
+        
+        patched_fig = go.Figure(fig)
+        patched_fig.update_layout(transition=dict(duration=500, easing="cubic-in-out"))
+        
+        if n_clicks % 2 == 1:
+            x_min, x_max = -0.10, -0.02
+            max_y = 0
+            
+            for trace in patched_fig.data:
+                if trace.x is not None and trace.y is not None:
+                    try:
+                        x_vals = np.array(trace.x, dtype=float)
+                        y_vals = np.array(trace.y, dtype=float)
+                        mask = (x_vals >= x_min) & (x_vals <= x_max)
+                        
+                        if np.any(mask):
+                            local_max = np.max(y_vals[mask])
+                            if local_max > max_y:
+                                max_y = local_max
+                    except (ValueError, TypeError):
+                        continue
+                            
+            if max_y == 0: max_y = 5 
+            
+            patched_fig.update_xaxes(autorange=False, range=[x_min, x_max])
+            patched_fig.update_yaxes(autorange=False, range=[0, max_y * 1.1])
+            patched_fig.update_layout(title_text=r"$\text{Left Tail Focus (Extreme Losses)}$")
+        else:
+            patched_fig.update_xaxes(autorange=True)
+            patched_fig.update_yaxes(autorange=True)
+            patched_fig.update_layout(title_text=r"$\text{Aggregated Return Distribution: AAPL}$")
+            
+        return patched_fig
+
+    @app.callback(
+        [Output('intro-contagion-map', 'figure'), Output('asia-impact-table', 'children')],
+        [Input('main-asset-dropdown', 'value'), Input('zoom-asia-btn', 'n_clicks')],
+        [State('intro-contagion-map', 'figure')]
+    )
+    def update_intro_map_and_table(main_ticker, n_clicks, current_fig):
+        target_date = '2025-10-10'
+        calm_period = '1M'
+        
+        engine.set_main_asset(main_ticker)
+        country_assets = engine.assets_df[engine.assets_df['sector'] == 'Country']
+        map_rows = []
+        target_countries = ['China', 'Hong Kong', 'Singapore', 'Vietnam']
+        table_data = []
+
+        for _, row in country_assets.iterrows():
+            metrics = engine.get_event_contagion(row['ticker'], target_date, calm_period)
+            if metrics:
+                (delta_rho, stress_rho, _), (delta_vol, _, _) = metrics
+                coords = COUNTRY_COORDS.get(row['country'])
+                if coords:
+                    map_rows.append({'Val': delta_rho, 'Vol': abs(delta_vol), 'Lat': coords[0], 'Lon': coords[1], 'Country': row['country'], 'Ticker': row['ticker']})
+                
+                if row['country'] in target_countries:
+                    table_data.append({'Country': row['country'], 'Jump': delta_rho})
+        
+        if not map_rows:
+            fig = go.Figure()
+            fig.update_layout(title=f"Sem dados para {target_date}", template="plotly_dark", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
+            return fig, html.Div()
+            
+        v_vals = np.array([row['Vol'] for row in map_rows])
+        v_norm = (v_vals - np.min(v_vals)) / (np.max(v_vals) - np.min(v_vals) + 1e-9)
+        radii = 3.5 + np.sqrt(v_norm) * 14.0 
+        
+        lons, lats = [row['Lon'] for row in map_rows], [row['Lat'] for row in map_rows]
+        new_x, new_y = calculate_dorling_layout(lons, lats, radii)
+
+        c_vals = np.array([row['Val'] for row in map_rows])
+        c_norm = np.clip((c_vals - (-1.0)) / (1.0 - (-1.0)), 0, 1)
+        colors = sample_colorscale('RdBu_r', c_norm)
+
+        fig_map = go.Figure()
+
+        for i in range(len(map_rows)):
+            t = np.linspace(0, 2*np.pi, 50)
+            cx, cy = new_x[i] + radii[i] * np.cos(t), new_y[i] + radii[i] * np.sin(t)
+            fig_map.add_trace(go.Scatter(x=cx, y=cy, fill='toself', fillcolor=colors[i], line=dict(color='white', width=1.5), mode='lines', name=map_rows[i]['Country'], text=f"<b>{map_rows[i]['Country']}</b><br>Δρ: {c_vals[i]:.2f}", hoverinfo='text', showlegend=False))
+            fig_map.add_trace(go.Scatter(x=[new_x[i]], y=[new_y[i]], mode='text', text=[map_rows[i]['Ticker']], textfont=dict(color='white', size=11, family="sans-serif"), hoverinfo='skip', showlegend=False))
+
+        fig_map.add_trace(go.Scatter(x=[None], y=[None], mode='markers', marker=dict(colorscale='RdBu_r', cmin=-1, cmax=1, showscale=False)))
+        fig_map.update_layout(title=rf"$\text{{Shock (}} \Delta\rho \text{{) - {target_date} (Calm: 1M)}}$", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=50, b=10))
+
+        fig_map.update_layout(transition=dict(duration=500, easing="cubic-in-out"))
+        if n_clicks and n_clicks % 2 == 1:
+            fig_map.update_xaxes(range=[70, 150], autorange=False)
+            fig_map.update_yaxes(range=[-10, 50], autorange=False)
+        else:
+            fig_map.update_xaxes(autorange=True)
+            fig_map.update_yaxes(autorange=True)
+
+        table_header = html.Thead(html.Tr([html.Th("Country"), html.Th("Correlation Jump (Δρ)")]))
+        table_body = html.Tbody([
+            html.Tr([
+                html.Td(d['Country']), 
+                html.Td(f"+{d['Jump']:.4f}", style={'color': '#2ecc71' if d['Jump'] > 0 else '#e74c3c', 'fontWeight': 'bold'})
+            ]) for d in sorted(table_data, key=lambda x: x['Jump'], reverse=True)
+        ])
+        
+        impact_table = html.Table([table_header, table_body], className='intro-table', style={'width': '100%', 'color': '#fff', 'borderCollapse': 'collapse', 'fontSize': '1.2em'})
+
+        return fig_map, impact_table
 
     @app.callback(
         [Output('contagion-map', 'figure'), Output('safe-havens-list', 'children')],
