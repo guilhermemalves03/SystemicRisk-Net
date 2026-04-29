@@ -359,3 +359,123 @@ def register_callbacks(app, engine):
         
         fig_mc.update_layout(title=f"Monte Carlo Projection (Day {frame}/30)", template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=LATEX_FONT, margin=dict(l=40, r=20, t=50, b=40), xaxis=dict(range=[0, 30]), yaxis=dict(range=[np.min(paths)*0.95, np.max(paths)*1.05]))
         return fig_mc, frame + 1, False, str_max, str_mean, str_min
+    
+
+    @app.callback(
+        Output('intro-mc-sim', 'figure'),
+        [Input('mc-paths-btn', 'n_clicks'), Input('main-asset-dropdown', 'value')],
+        [State('mc-paths-store', 'data')]
+    )
+    def toggle_intro_mc(n_clicks, ticker, paths_data):
+        if paths_data is None: return go.Figure()
+        
+        paths = np.array(paths_data) # [31 steps, 80 sims]
+        x_vals = np.arange(len(paths))
+        show_paths = n_clicks % 2 == 1
+        
+        fig = go.Figure()
+        fig.update_layout(transition=dict(duration=500, easing="cubic-in-out"))
+
+        if show_paths:
+            # Mostrar caminhos individuais coloridos (primeiros 40 caminhos)
+            colors = sample_colorscale('Rainbow', np.linspace(0, 1, 40))
+            for i in range(40):
+                fig.add_trace(go.Scatter(
+                    x=x_vals, y=paths[:, i], 
+                    mode='lines', line=dict(width=1, color=colors[i]),
+                    opacity=0.5, showlegend=False
+                ))
+            title = r"$\text{Random Walk Simulations (Bootstrapping)}$"
+        else:
+            # Mostrar a visualização agregada (Média + ES + VaR)
+            mean_path = np.mean(paths, axis=1)
+            lower_bound = np.percentile(paths, 1, axis=1)
+            upper_bound = np.percentile(paths, 99, axis=1)
+            base_line = np.ones_like(x_vals)
+
+            # Gradiente Otimista (Verde)
+            fig.add_trace(go.Scatter(x=x_vals, y=base_line, mode='lines', line=dict(width=0), showlegend=False))
+            fig.add_trace(go.Scatter(x=x_vals, y=upper_bound, mode='lines', fill='tonexty', 
+                                     fillcolor='rgba(46, 204, 113, 0.1)', line=dict(width=1, color='#2ecc71'), showlegend=False))
+            # Gradiente Pessimista (Vermelho)
+            fig.add_trace(go.Scatter(x=x_vals, y=base_line, mode='lines', line=dict(width=0), showlegend=False))
+            fig.add_trace(go.Scatter(x=x_vals, y=lower_bound, mode='lines', fill='tonexty', 
+                                     fillcolor='rgba(231, 76, 60, 0.1)', line=dict(width=1, color='#e74c3c'), showlegend=False))
+            # Linha Média
+            fig.add_trace(go.Scatter(x=x_vals, y=mean_path, mode='lines', line=dict(width=3, color='#FFFFFF'), showlegend=False))
+            title = r"$\text{Aggregated Expected Shortfall (Risk Bands)}$"
+
+        fig.update_layout(
+            title=title, font=LATEX_FONT, template="plotly_dark",
+            xaxis_title="Days", yaxis_title="Price Multiplier (S_t / S_0)",
+            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(l=40, r=20, t=50, b=40)
+        )
+        return fig
+    
+
+    @app.callback(
+        Output('network-graph', 'figure'),
+        [Input('selected-stress-date', 'data'), Input('main-asset-dropdown', 'value')]
+    )
+    def render_network(selected_date, main_ticker):
+        engine.set_main_asset(main_ticker)
+        extreme_days, _, _ = engine.get_extreme_events(months=12)
+        target_date = selected_date if selected_date else (extreme_days.index[-1].strftime('%Y-%m-%d') if not extreme_days.empty else None)
+        
+        if not target_date:
+            return go.Figure()
+
+        top_pos, top_neg = engine.get_network_data(target_date, top_n=4)
+        if not top_pos:
+            return go.Figure()
+
+        fig = go.Figure()
+
+        # Função auxiliar para desenhar nós e arestas
+        def add_nodes_edges(nodes, angles, color, is_top):
+            x_nodes, y_nodes, texts, hover_texts = [], [], [], []
+            
+            for i, node in enumerate(nodes):
+                x, y = np.cos(angles[i]), np.sin(angles[i])
+                x_nodes.append(x)
+                y_nodes.append(y)
+                texts.append(node['ticker'])
+                hover_texts.append(f"{node['name']}<br>ρ: {node['rho']:.2f}")
+                
+                # Espessura da aresta baseada na correlação
+                edge_width = max(1, abs(node['rho']) * 6)
+                
+                fig.add_trace(go.Scatter(x=[0, x], y=[0, y], mode='lines', 
+                                         line=dict(width=edge_width, color=color), 
+                                         opacity=0.6, hoverinfo='none', showlegend=False))
+            
+            fig.add_trace(go.Scatter(x=x_nodes, y=y_nodes, mode='markers+text', text=texts,
+                                     textposition="top center" if is_top else "bottom center",
+                                     textfont=dict(color='white', size=13),
+                                     marker=dict(size=25, color=color, line=dict(width=1, color='white')),
+                                     hovertext=hover_texts, hoverinfo='text', showlegend=False))
+
+        # Arestas e Nós de Contágio (Superiores)
+        pos_angles = np.linspace(np.pi/6, 5*np.pi/6, len(top_pos))
+        add_nodes_edges(top_pos, pos_angles, '#e74c3c', is_top=True)
+
+        # Arestas e Nós de Proteção (Inferiores)
+        neg_angles = np.linspace(7*np.pi/6, 11*np.pi/6, len(top_neg))
+        add_nodes_edges(top_neg, neg_angles, '#2ecc71', is_top=False)
+
+        # Nó Central (Desenhado no fim para ficar por cima das linhas)
+        fig.add_trace(go.Scatter(x=[0], y=[0], mode='markers+text', text=[f"<b>{main_ticker}</b>"], 
+                                 textposition="middle center", textfont=dict(color='black', size=14),
+                                 marker=dict(size=45, color='#f1c40f', line=dict(width=2, color='white')),
+                                 hoverinfo='text', name='Center', showlegend=False))
+
+        # Limpar os eixos e o fundo
+        fig.update_layout(title=rf"$\text{{Contagion Network - }} {target_date}$",
+                          font=LATEX_FONT, template="plotly_dark",
+                          xaxis=dict(visible=False, range=[-1.5, 1.5]),
+                          yaxis=dict(visible=False, range=[-1.5, 1.5]),
+                          plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                          margin=dict(l=20, r=20, t=50, b=20))
+
+        return fig

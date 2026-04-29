@@ -118,6 +118,28 @@ story_sections = html.Div([
 
         html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
+
+    html.Div([
+        # Coluna Esquerda: Texto Explicativo
+        html.Div([
+            html.H1("Prever o Imprevisível?", style={'color': '#ddd', 'fontSize': '3.5em', 'marginBottom': '20px', 'textAlign': 'left'}),
+            html.P("Mesmo em mercados voláteis, a Simulação de Monte Carlo permite-nos mapear o futuro.", style={'color': '#bbb', 'fontSize': '1.8em', 'textAlign': 'left'}),
+            html.P("Ao projetar milhares de trajetórias baseadas em retornos históricos, transformamos a incerteza em probabilidades mensuráveis.", style={'color': '#888', 'fontSize': '1.2em', 'textAlign': 'left', 'marginTop': '20px'}),
+        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+
+        # Coluna Direita: Visualização da Simulação
+        html.Div([
+            dcc.Graph(id='intro-mc-sim', config={'displayModeBar': False}, style={'height': '550px', 'width': '100%'}),
+            html.Button("SHOW INDIVIDUAL PATHS", id='mc-paths-btn', n_clicks=0, 
+                        style={
+                            'marginTop': '20px', 'backgroundColor': 'transparent', 
+                            'color': '#bbb', 'border': '1px solid #555', 
+                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px', 'borderRadius': '5px'
+                        })
+        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+
+        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
+    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
 ])
 
 def get_layout(engine):
@@ -199,6 +221,28 @@ $$ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}]$$
                 ], style={'display': 'flex', 'minHeight': 'calc(100vh - 104px)', 'padding': '15px', 'boxSizing': 'border-box'})
             ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
                selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #3498db', 'borderBottom': 'none', 'padding': '10px'}),
+
+            dcc.Tab(label='Network', value='tab-network', children=[
+                html.Div([
+                    html.Div([
+                        dcc.Graph(id='network-graph', style={'flex': '1', 'minHeight': '600px'}, config={'displayModeBar': False})
+                    ], style={'flex': '1', 'backgroundColor': '#000', 'display': 'flex', 'flexDirection': 'column'}),
+                    
+                    html.Div([
+                        html.H3("CONTAGION TOPOLOGY", style={'color': '#ddd', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif'}),
+                        dcc.Markdown(r"""
+Grafo em estrela das dependências em eventos extremos.
+
+* **Top (Vermelho):** Ativos com maior correlação positiva (Risco Sistémico / Efeito Contágio).
+* **Bottom (Verde):** Ativos com menor correlação ou correlação negativa (Hedges / Safe Havens).
+
+A espessura da ligação representa a força absoluta da correlação ($\rho_{\text{stress}}$).
+                        """, mathjax=True)
+                    ], style=explanation_box_style)
+                    
+                ], style={'display': 'flex', 'minHeight': 'calc(100vh - 104px)', 'padding': '15px', 'boxSizing': 'border-box'})
+            ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
+               selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #f1c40f', 'borderBottom': 'none', 'padding': '10px'}),
 
             dcc.Tab(label='Map', value='tab-map', children=[
                 html.Div([
