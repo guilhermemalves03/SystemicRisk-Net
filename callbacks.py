@@ -91,49 +91,49 @@ def register_callbacks(app, engine):
         return no_update, no_update
 
     @app.callback(
-        [Output('intro-apple-dist', 'figure'), Output('distribution-graph', 'figure'), Output('ridgeline-graph', 'figure'),
-         Output('extreme-dates-list', 'children'), Output('extreme-dates-list-map', 'children'),
-         Output('mc-paths-store', 'data'), Output('mc-es-store', 'data'), 
-         Output('animation-interval', 'disabled'), Output('animation-frame', 'data')],
+        [
+         # --- 1. Outputs da História (Intro) ---
+         Output('intro-apple-dist', 'figure'), 
+         Output('intro-mc-paths-store', 'data'),
+         
+         # --- 2. Outputs da Dashboard Principal ---
+         Output('distribution-graph', 'figure'), 
+         Output('ridgeline-graph', 'figure'),
+         Output('extreme-dates-list', 'children'), 
+         Output('extreme-dates-list-map', 'children'),
+         Output('mc-paths-store', 'data'), 
+         Output('mc-es-store', 'data'), 
+         Output('animation-interval', 'disabled'), 
+         Output('animation-frame', 'data')
+        ],
         [Input('main-asset-dropdown', 'value')]
     )
     def setup_analysis(selected_ticker):
+        
+        # ========================================================
+        # FASE 1: DASHBOARD PRINCIPAL (Usa a Dropdown)
+        # ========================================================
         engine.set_main_asset(selected_ticker)
         extreme_days, var_limit, filtered_returns = engine.get_extreme_events(months=12)
         
         counts, bin_edges = np.histogram(filtered_returns, bins=80, density=True)
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
         
-        fig_dist = go.Figure()
-        fig_dist.add_trace(go.Bar(
-            x=bin_centers[bin_centers > var_limit], 
-            y=counts[bin_centers > var_limit], 
-            marker_color='#333', 
-            name=r'$\text{Normal}$', # <--- MUDAR AQUI
-            showlegend=True # Ativei para veres a legenda
-        ))        
-        
-        fig_dist.add_trace(go.Bar(
-            x=bin_centers[bin_centers <= var_limit], 
-            y=counts[bin_centers <= var_limit], 
-            marker_color='#c0392b', 
-            name=r'$\text{Tail Stress}$', # <--- MUDAR AQUI
-            showlegend=True
-        ))
+        fig_dist_main = go.Figure()
+        fig_dist_main.add_trace(go.Bar(x=bin_centers[bin_centers > var_limit], y=counts[bin_centers > var_limit], marker_color='#333', name=r'$\text{Normal}$', showlegend=True))        
+        fig_dist_main.add_trace(go.Bar(x=bin_centers[bin_centers <= var_limit], y=counts[bin_centers <= var_limit], marker_color='#c0392b', name=r'$\text{Tail Stress}$', showlegend=True))
         
         x_range = np.linspace(filtered_returns.min(), filtered_returns.max(), 250)
-        fig_dist.add_trace(go.Scatter(x=x_range, y=gaussian_kde(filtered_returns)(x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5)))
-        fig_dist.add_trace(go.Scatter(x=x_range, y=norm.pdf(x_range, filtered_returns.mean(), filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5)))
+        fig_dist_main.add_trace(go.Scatter(x=x_range, y=gaussian_kde(filtered_returns)(x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5)))
+        fig_dist_main.add_trace(go.Scatter(x=x_range, y=norm.pdf(x_range, filtered_returns.mean(), filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5)))
         
-        fig_dist.add_vline(x=var_limit, line_dash="dash", line_color="#e74c3c")
-        fig_dist.add_annotation(x=var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
-
-        fig_dist.update_layout(title=rf"$\text{{Aggregated Return Distribution: }} \text{{{selected_ticker}}}$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$")
+        fig_dist_main.add_vline(x=var_limit, line_dash="dash", line_color="#e74c3c")
+        fig_dist_main.add_annotation(x=var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
+        fig_dist_main.update_layout(title=rf"$\text{{Aggregated Return Distribution: }} \text{{{selected_ticker}}}$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$")
 
         fig_ridge = go.Figure()
         df_returns = pd.DataFrame({'return': filtered_returns})
         df_returns['Month'] = df_returns.index.to_period('M')
-        
         unique_months = df_returns['Month'].unique()[-12:] 
         colors = sample_colorscale('Aggrnyl', np.linspace(0, 1, len(unique_months)))
         
@@ -141,20 +141,49 @@ def register_callbacks(app, engine):
             month_data = df_returns[df_returns['Month'] == month]['return']
             if len(month_data) > 2:
                 m_ret = month_data.mean()
-                q_str = f"Q{month.quarter}"
-                month_label = f"{month.strftime('%b %Y')} ({q_str})"
-                
+                month_label = f"{month.strftime('%b %Y')} (Q{month.quarter})"
                 fig_ridge.add_trace(go.Violin(x=month_data, y=[month_label] * len(month_data), name=month_label, line_color='white', line_width=1, fillcolor=colors[i], opacity=0.9, side='positive', width=3.5, orientation='h', points=False, showlegend=False))
                 fig_ridge.add_annotation(x=m_ret, y=month_label, text=f"μ: {m_ret*100:.2f}%", showarrow=False, yshift=18, bgcolor="rgba(0,0,0,0.7)", bordercolor=colors[i], font=dict(color="white", size=11, family="sans-serif"))
-
+        
         fig_ridge.update_layout(title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", xaxis_title=r"$\Delta \ln(P_t)$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=20, t=30, b=40), violingap=0, violingroupgap=0, violinmode='overlay')
 
         list_items = [html.Div([html.Span(d.strftime('%Y-%m-%d')), html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#e74c3c'})], style={'padding':'4px 0','borderBottom':'1px solid #111'}) for d in extreme_days.sort_index(ascending=False).index]
-
         list_items_clickable = [html.Button([html.Span(d.strftime('%Y-%m-%d'), style={'fontWeight': 'bold'}), html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#ff6b6b'})], id={'type': 'stress-date-btn', 'date': d.strftime('%Y-%m-%d')}, style={'width': '100%', 'backgroundColor': '#1e1e1e', 'border': '1px solid #444', 'borderRadius': '5px', 'color': '#eee', 'textAlign': 'left', 'cursor': 'pointer', 'padding': '8px 10px', 'marginBottom': '6px', 'fontFamily': 'inherit', 'fontSize': '14px'}) for d in extreme_days.sort_index(ascending=False).index]
 
-        paths, sim_es = engine.run_monte_carlo(n_sims=80)
-        return fig_dist, fig_dist, fig_ridge, list_items, list_items_clickable, paths.tolist(), sim_es, False, 0
+        main_paths, sim_es = engine.run_monte_carlo(n_sims=80)
+
+        # ========================================================
+        # FASE 2: MODO HISTÓRIA (Fica SEMPRE preso na AAPL)
+        # ========================================================
+        engine.set_main_asset('AAPL')
+        i_extreme_days, i_var_limit, i_filtered_returns = engine.get_extreme_events(months=12)
+        
+        i_counts, i_bin_edges = np.histogram(i_filtered_returns, bins=80, density=True)
+        i_bin_centers = (i_bin_edges[:-1] + i_bin_edges[1:]) / 2
+        
+        fig_dist_intro = go.Figure()
+        fig_dist_intro.add_trace(go.Bar(x=i_bin_centers[i_bin_centers > i_var_limit], y=i_counts[i_bin_centers > i_var_limit], marker_color='#333', name=r'$\text{Normal}$', showlegend=True))        
+        fig_dist_intro.add_trace(go.Bar(x=i_bin_centers[i_bin_centers <= i_var_limit], y=i_counts[i_bin_centers <= i_var_limit], marker_color='#c0392b', name=r'$\text{Tail Stress}$', showlegend=True))
+        
+        i_x_range = np.linspace(i_filtered_returns.min(), i_filtered_returns.max(), 250)
+        fig_dist_intro.add_trace(go.Scatter(x=i_x_range, y=gaussian_kde(i_filtered_returns)(i_x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5)))
+        fig_dist_intro.add_trace(go.Scatter(x=i_x_range, y=norm.pdf(i_x_range, i_filtered_returns.mean(), i_filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5)))
+        
+        fig_dist_intro.add_vline(x=i_var_limit, line_dash="dash", line_color="#e74c3c")
+        fig_dist_intro.add_annotation(x=i_var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {i_var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
+        fig_dist_intro.update_layout(title=rf"$\text{{Aggregated Return Distribution: AAPL}}$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$")
+        
+
+        intro_paths, _ = engine.run_monte_carlo(n_sims=80)
+
+        # ========================================================
+        # RETORNO FINAL (Pela ordem exata dos Outputs)
+        # ========================================================
+        return (
+            fig_dist_intro, intro_paths.tolist(),  # Os 2 da História
+            fig_dist_main, fig_ridge, list_items, list_items_clickable, main_paths.tolist(), sim_es, False, 0  # Os 8 da Dashboard
+        )
+    
 
     @app.callback(
         [Output('intro-apple-dist', 'figure', allow_duplicate=True),
@@ -209,10 +238,12 @@ def register_callbacks(app, engine):
         [Output('intro-contagion-map', 'figure'), 
          Output('asia-impact-table', 'children'),
          Output('zoom-asia-btn', 'children')],
-        [Input('main-asset-dropdown', 'value'), Input('zoom-asia-btn', 'n_clicks')],
+        [Input('zoom-asia-btn', 'n_clicks')],         # <-- APAGAMOS O INPUT DA DROPDOWN
         [State('intro-contagion-map', 'figure')]
     )
-    def update_intro_map_and_table(main_ticker, n_clicks, current_fig):
+    def update_intro_map_and_table(n_clicks, current_fig):
+
+        main_ticker = 'AAPL'
         target_date = '2025-10-10'
         calm_period = '1M'
         
@@ -414,7 +445,7 @@ def register_callbacks(app, engine):
         max_val, mean_val, min_val = np.max(current_vals), np.mean(current_vals), np.min(current_vals)
         
         str_max = rf"$\text{{Max: }} {max_val*100:+.2f}\%$"
-        str_mean = rf"$\text{{Mean: }} {mean_val*100:+.2f}\%$"
+        str_mean = rf"$\text{{Mean: }} {mean_val*100:+.2f}\%$"  
         str_min = rf"$\text{{Worst: }} {min_val*100:+.2f}\%$"
         
         # 4. Construir a figura MUITO mais leve (sem fillgradient)
@@ -423,7 +454,7 @@ def register_callbacks(app, engine):
         fig_mc.add_trace(go.Scatter(x=x_vals, y=lower_bound, mode='lines', fill='tonexty', fillcolor='rgba(231, 76, 60, 0.2)', line=dict(width=1, color='#FF0000', shape='spline'), showlegend=False))
         fig_mc.add_trace(go.Scatter(x=x_vals, y=base_line, mode='lines', line=dict(width=0), showlegend=False))
         fig_mc.add_trace(go.Scatter(x=x_vals, y=upper_bound, mode='lines', fill='tonexty', fillcolor='rgba(46, 204, 113, 0.2)', line=dict(width=1, color='#39FF14', shape='spline'), showlegend=False))
-        fig_mc.add_trace(go.Scatter(x=x_vals, y=mean_path, mode='lines', line=dict(width=2, color='#FFFFFF', shape='spline'), showlegend=False))
+        fig_mc.add_trace(go.Scatter(x=x_vals, y=mean_path, mode='lines', line=dict(width=2, color='#f1c40f', shape='spline'), showlegend=False))
 
         # Congelar os eixos Y para não tremerem durante a animação
         y_min, y_max = np.min(paths) * 0.95, np.max(paths) * 1.05
@@ -443,13 +474,13 @@ def register_callbacks(app, engine):
         return fig_mc, frame + 1, False, str_max, str_mean, str_min    
 
     @app.callback(
-        [Output('intro-mc-sim', 'figure'),
-         Output('mc-paths-btn', 'children'),
-         Output('intro-stat-max', 'children'),  # <-- NOVO: Caixa Max
-         Output('intro-stat-mean', 'children'), # <-- NOVO: Caixa Mean
-         Output('intro-stat-min', 'children')], # <-- NOVO: Caixa Min
-        [Input('mc-paths-btn', 'n_clicks'), Input('mc-paths-store', 'data')]
-    )
+    [Output('intro-mc-sim', 'figure'),
+     Output('mc-paths-btn', 'children'),
+     Output('intro-stat-max', 'children'),  
+     Output('intro-stat-mean', 'children'), 
+     Output('intro-stat-min', 'children')], 
+    [Input('mc-paths-btn', 'n_clicks'), Input('intro-mc-paths-store', 'data')] 
+)
     def toggle_intro_mc(n_clicks, paths_data):
         if paths_data is None: 
             return go.Figure(), no_update, "", "", ""
@@ -486,10 +517,10 @@ def register_callbacks(app, engine):
             fig.add_trace(go.Scatter(x=x_vals, y=base_line, mode='lines', line=dict(width=0), showlegend=False))
             fig.add_trace(go.Scatter(x=x_vals, y=lower_bound, mode='lines', fill='tonexty', 
                                      fillcolor='rgba(231, 76, 60, 0.1)', line=dict(width=1, color='#e74c3c'), showlegend=False))
-            fig.add_trace(go.Scatter(x=x_vals, y=mean_path, mode='lines', line=dict(width=3, color='#FFFFFF'), showlegend=False))
+            fig.add_trace(go.Scatter(x=x_vals, y=mean_path, mode='lines', line=dict(width=3, color='#f1c40f'), showlegend=False))
             title = r"$\text{Aggregated Expected Shortfall (Risk Bands)}$"
             btn_text = "SHOW INDIVIDUAL PATHS" 
-
+        
         fig.update_layout(
             title=title, title_x=0.5, font=LATEX_FONT, template="plotly_dark",
             xaxis_title="Days", yaxis_title=r"$\text{Price Multiplier } (S_t / S_0)$",
@@ -508,7 +539,7 @@ def register_callbacks(app, engine):
 
         # Formatamos em LaTeX para ficar elegante e com cores
         str_max = rf"$\text{{Max: }} {max_val*100:+.2f}\%$"
-        str_mean = rf"$\text{{Mean: }} {mean_val*100:+.2f}\%$"
+        str_mean = rf"$\text{{Mean: }} {mean_val*100:+.2f}\%$"  # <-- Tira o \color{#f1c40f}
         str_min = rf"$\text{{Worst: }} {min_val*100:+.2f}\%$"
 
         return fig, btn_text, str_max, str_mean, str_min    
@@ -516,9 +547,11 @@ def register_callbacks(app, engine):
     @app.callback(
         [Output('intro-network-graph', 'figure'),
          Output('network-highlight-btn', 'children')],
-        [Input('main-asset-dropdown', 'value'), Input('network-highlight-btn', 'n_clicks')]
+        [Input('network-highlight-btn', 'n_clicks')] 
     )
-    def update_intro_network(main_ticker, n_clicks):
+    def update_intro_network(n_clicks):
+
+        main_ticker = 'AAPL'   
         target_date = '2025-10-10'
         engine.set_main_asset(main_ticker)
 

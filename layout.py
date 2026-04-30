@@ -63,10 +63,16 @@ story_sections = html.Div([
             dcc.Graph(id='intro-apple-dist', config={'displayModeBar': False},mathjax=True, style={'height': '550px', 'width': '100%'}),
             html.Button("ZOOM: LEFT TAIL", id='zoom-btn-intro', n_clicks=0, 
                 style={
-                    'marginTop': '20px', 'backgroundColor': 'transparent', 
-                    'color': '#39FF14', 'border': '1px solid #39FF14', 
-                    'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px'
-                })
+                            'marginTop': '20px', 
+                            'transform': 'translateX(-50px)',
+                            'backgroundColor': 'transparent', 
+                            'color': '#e74c3c',               # <-- Texto a azul
+                            'border': '1px solid #e74c3c',    # <-- Borda a azul
+                            'padding': '10px 20px', 
+                            'cursor': 'pointer', 
+                            'fontSize': '14px',
+                            'borderRadius': '5px'             # (Opcional: se quiseres cantos ligeiramente arredondados)
+                        })
         ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
         # Coluna Direita: Texto e Eventos
         html.Div([
@@ -126,15 +132,20 @@ story_sections = html.Div([
             # --- CAIXAS DE ESTATÍSTICAS NOVAS ---
             html.Div(style={'width': '100%', 'padding': '15px 0', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-evenly'}, children=[
                 html.Div(dcc.Markdown(id='intro-stat-max', mathjax=True, style={'margin': 0}), style={'color': '#2ecc71', 'border': '1px solid #2ecc71', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(46, 204, 113, 0.05)', 'fontSize': '16px'}),
-                html.Div(dcc.Markdown(id='intro-stat-mean', mathjax=True, style={'margin': 0}), style={'color': "#ffffff", 'border': '1px solid #f1c40f', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(241, 196, 15, 0.05)', 'fontSize': '16px'}),
+                html.Div(dcc.Markdown(id='intro-stat-mean', mathjax=True, style={'margin': 0}), style={'color': '#f1c40f', 'border': '1px solid #f1c40f', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(241, 196, 15, 0.05)', 'fontSize': '16px'}),
                 html.Div(dcc.Markdown(id='intro-stat-min', mathjax=True, style={'margin': 0}), style={'color': '#e74c3c', 'border': '1px solid #e74c3c', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(231, 76, 60, 0.05)', 'fontSize': '16px'})
             ]),
 
             html.Button("SHOW INDIVIDUAL PATHS", id='mc-paths-btn', n_clicks=0, 
                         style={
-                            'marginTop': '10px', 'backgroundColor': 'transparent', 
-                            'color': '#bbb', 'border': '1px solid #555', 
-                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px', 'borderRadius': '5px'
+                            'marginTop': '20px', 
+                            'backgroundColor': 'transparent', 
+                            'color': '#3498db',               # <-- Texto a azul
+                            'border': '1px solid #3498db',    # <-- Borda a azul
+                            'padding': '10px 20px', 
+                            'cursor': 'pointer', 
+                            'fontSize': '14px',
+                            'borderRadius': '5px'             # (Opcional: se quiseres cantos ligeiramente arredondados)
                         })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
 
@@ -166,11 +177,36 @@ story_sections = html.Div([
 
             # Legenda Explicativa
             html.Div([
-                html.Div([html.Span("●", style={'color': '#e74c3c', 'marginRight': '10px', 'fontSize': '1.5em'}), html.B("Top (Red): "), "Systemic Risk. Assets that crash alongside the main asset."]),
-                html.Div([html.Span("●", style={'color': '#2ecc71', 'marginRight': '10px', 'fontSize': '1.5em'}), html.B("Bottom (Green): "), "Safe Havens. Assets that protect the portfolio."]),
-                html.Div([html.Span("━", style={'color': '#fff', 'marginRight': '10px', 'fontWeight': 'bold'}), html.B("Line Thickness: "), "Absolute strength of the stress correlation."])
-            ], style={'marginTop': '30px', 'backgroundColor': '#0a0a0a', 'padding': '20px', 'borderRadius': '10px', 'border': '1px solid #333', 'color': '#eee', 'fontSize': '1.2em', 'lineHeight': '2'})
+                # Linha 1: Top (Red)
+                html.Div([
+                    html.Span("●", style={'color': '#e74c3c', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.5em', 'textAlign': 'center'}),
+                    html.Span([html.B("Top (Red): "), "Systemic Risk. Assets that crash alongside the main asset."])
+                ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '15px'}),
+                
+                # Linha 2: Bottom (Green)
+                html.Div([
+                    html.Span("●", style={'color': '#2ecc71', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.5em', 'textAlign': 'center'}),
+                    html.Span([html.B("Bottom (Green): "), "Safe Havens. Assets that protect the portfolio."])
+                ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '15px'}),
+                
+                # Linha 3: Line Thickness
+                html.Div([
+                    html.Span("━", style={'color': '#fff', 'width': '35px', 'display': 'inline-block', 'fontWeight': 'bold', 'textAlign': 'center'}),
+                    html.Span([html.B("Line Thickness: "), "Absolute strength of the stress correlation."])
+                ], style={'display': 'flex', 'alignItems': 'center'})
 
+            ], style={
+                'marginTop': '30px', 
+                'backgroundColor': '#0a0a0a', 
+                'padding': '30px', 
+                'borderRadius': '10px', 
+                'border': '1px solid #333', 
+                'color': '#eee', 
+                'fontSize': '1.1em', 
+                'display': 'flex', 
+                'flexDirection': 'column', 
+                'alignItems': 'flex-start' # Garante que as linhas começam todas à esquerda
+            })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
 
         # --- COLUNA DIREITA: Gráfico do Grafo + Botão ---
@@ -225,9 +261,9 @@ story_sections = html.Div([
             ),
             html.Button("ZOOM: ASIA FOCUS", id='zoom-asia-btn', n_clicks=0, 
                         style={
-                            'marginTop': '0px', 'backgroundColor': 'transparent', 
+                            'marginTop': '20px', 'backgroundColor': 'transparent', 
                             'color': '#2ecc71', 'border': '1px solid #2ecc71', 
-                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px'
+                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px', 'borderRadius': '5px'
                         })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
 
@@ -242,6 +278,7 @@ def get_layout(engine):
 
     dashboard_layout = html.Div([
         dcc.Store(id='mc-paths-store'),
+        dcc.Store(id='intro-mc-paths-store'),
         dcc.Store(id='mc-es-store'),
         dcc.Store(id='animation-frame', data=0),
         dcc.Store(id='selected-stress-date', data=None),
