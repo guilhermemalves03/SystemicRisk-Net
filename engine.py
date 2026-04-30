@@ -99,6 +99,36 @@ class SystemicRiskEngine:
         
         return (stress_corr - calm_corr, stress_corr, calm_corr), (delta_vol, stress_vol_other, calm_vol_other)
 
+    def get_bulk_contagion(self, target_date, calm_period='3M'):
+        """Calcula as correlações para todos os ativos de uma só vez (Vetorizado)."""
+        if self.main_returns is None: return None, None
+        
+        stress_date = pd.to_datetime(target_date)
+        if stress_date not in self.returns.index: 
+            idx = self.returns.index.get_indexer([stress_date], method='nearest')[0]
+        else:
+            idx = self.returns.index.get_loc(stress_date)
+            
+        start_stress = max(0, idx - 15)
+        end_stress = min(len(self.returns) - 1, idx + 15)
+        
+        calm_days = 21 if calm_period == '1M' else (63 if calm_period == '3M' else 252)
+        end_calm = max(0, start_stress - 1)
+        start_calm = max(0, end_calm - calm_days)
+        
+        # Fatiamos o dataframe de TODAS as colunas ao mesmo tempo
+        stress_df = self.returns.iloc[start_stress:end_stress+1]
+        calm_df = self.returns.iloc[start_calm:end_calm+1]
+        
+        if len(stress_df) < 3 or len(calm_df) < 3: 
+            return None, None
+            
+        # O SUPER TRUQUE: corrwith() faz a matemática toda num milissegundo
+        stress_corrs = stress_df.corrwith(self.main_returns.iloc[start_stress:end_stress+1])
+        calm_corrs = calm_df.corrwith(self.main_returns.iloc[start_calm:end_calm+1])
+        
+        return stress_corrs, calm_corrs
+
     def calculate_expected_shortfall(self, returns_series, alpha=0.01):
         if returns_series.empty: return 0.0
         var_limit = returns_series.quantile(alpha)
@@ -122,23 +152,24 @@ class SystemicRiskEngine:
     def get_network_data(self, target_date, top_n=4):
         correlations = []
         
-        # Filtra os tickers válidos para excluir países e índices
-        # (Ajusta os nomes na lista se o teu CSV usar termos diferentes para o S&P 500)
         empresas_df = self.assets_df[~self.assets_df['sector'].isin(['Country', 'Index', 'ETF'])]
         valid_tickers = empresas_df['ticker'].tolist()
 
-        for ticker in self.returns.columns:
-            if ticker == self.main_ticker or ticker not in valid_tickers: 
+        # Chamamos a nossa nova função que nos dá as correlações de tudo!
+        stress_corrs, _ = self.get_bulk_contagion(target_date, '1M')
+        
+        if stress_corrs is None: return [], []
+
+        for ticker in valid_tickers:
+            if ticker == self.main_ticker or ticker not in stress_corrs: 
                 continue
             
-            name_match = self.assets_df[self.assets_df['ticker'] == ticker]['name'].values
-            name = name_match[0] if len(name_match) > 0 else ticker
-            
-            metrics = self.get_event_contagion(ticker, target_date, '1M')
-            if metrics:
-                stress_rho = metrics[0][1] # Usa a correlação de stress
-                if not np.isnan(stress_rho):
-                    correlations.append({'ticker': ticker, 'name': name, 'rho': stress_rho})
+            stress_rho = stress_corrs[ticker]
+            # Só guardamos se não for NaN
+            if not pd.isna(stress_rho):
+                name_match = self.assets_df[self.assets_df['ticker'] == ticker]['name'].values
+                name = name_match[0] if len(name_match) > 0 else ticker
+                correlations.append({'ticker': ticker, 'name': name, 'rho': stress_rho})
         
         df = pd.DataFrame(correlations).sort_values('rho', ascending=False)
         if len(df) < top_n * 2: return [], []

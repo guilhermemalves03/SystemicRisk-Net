@@ -42,6 +42,10 @@ story_style = {
 }
 
 story_sections = html.Div([
+    
+    # =====================================================================
+    # 1º SLIDE: TÍTULO INICIAL
+    # =====================================================================
     html.Div([
         html.H1("Systemic Risk-Net", style={'color': '#e74c3c', 'fontSize': '3.5em', 'marginBottom': '20px'}),
         html.P("This dashboard helps the investor to not lose money in extreme financial losses", style={'color':'#e74c3c', 'fontSize': '1.8em'}),
@@ -50,10 +54,13 @@ story_sections = html.Div([
         html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555'})
     ], style=story_style),
     
+    # =====================================================================
+    # 2º SLIDE: WHAT IS AN EXTREME EVENT? (Distribuição e Caixas de Texto)
+    # =====================================================================
     html.Div([
         # Coluna Esquerda: Gráfico
         html.Div([
-            dcc.Graph(id='intro-apple-dist', config={'displayModeBar': False}, style={'height': '550px', 'width': '100%'}),
+            dcc.Graph(id='intro-apple-dist', config={'displayModeBar': False},mathjax=True, style={'height': '550px', 'width': '100%'}),
             html.Button("ZOOM: LEFT TAIL", id='zoom-btn-intro', n_clicks=0, 
                 style={
                     'marginTop': '20px', 'backgroundColor': 'transparent', 
@@ -63,8 +70,8 @@ story_sections = html.Div([
         ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
         # Coluna Direita: Texto e Eventos
         html.Div([
-            html.H1("What is an Extreme Event?", style={'color': '#f1c40f', 'fontSize': '3.5em', 'marginBottom': '20px', 'textAlign': 'left'}),
-            html.P("For simple context, extreme events is when the stock price decreases a lot from one day to the other. Formaly we can visualize the distribution and see the left side (losses)", style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),
+            html.H1("What is an Extreme Event?", style={'color': '#e74c3c', 'fontSize': '3.5em', 'marginBottom': '20px', 'textAlign': 'left'}),
+            html.P("In simple terms, an extreme event is a sharp, sudden drop in a stock's price from one day to the next. In statistical terms, we visualize these severe losses in the far left tail of the return distribution.", style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),
             
             html.Div([
                 html.Div("Left side tail Extreme Events from the last 2 years: Apple (AAPL)", style={'color': '#fff', 'fontSize': '1.3em', 'marginBottom': '15px', 'fontWeight': 'bold'}),
@@ -72,16 +79,15 @@ story_sections = html.Div([
                 html.Div([
                     html.Span("2026-04-03", style={'color': '#bbb', 'display': 'inline-block', 'width': '120px'}),
                     html.Span("-5.13%", style={'color': '#e74c3c', 'fontWeight': 'bold', 'display': 'inline-block', 'width': '80px'}),
-                    html.Span("U.S. tariffs announcement", style={'color': '#fff'})
-                    
+                    html.Span("Start of Middle-East war", style={'color': '#fff'}) 
                 ], style={'fontSize': '1.2em', 'margin': '10px 0', 'textAlign': 'left'}),
                 
                 html.Div([
                     html.Span("2026-04-04", style={'color': '#bbb', 'display': 'inline-block', 'width': '120px'}),
                     html.Span("-3.52%", style={'color': '#e74c3c', 'fontWeight': 'bold', 'display': 'inline-block', 'width': '80px'}),
-                    html.Span("Global risk aversion", style={'color': '#fff'})
+                    html.Span("Conflict Amplification", style={'color': '#fff'}) 
                 ], style={'fontSize': '1.2em', 'margin': '10px 0', 'textAlign': 'left'}),
-                
+
                 html.Div([
                     html.Span("2025-10-10", style={'color': '#bbb', 'display': 'inline-block', 'width': '120px'}),
                     html.Span("-3.51%", style={'color': '#e74c3c', 'fontWeight': 'bold', 'display': 'inline-block', 'width': '80px'}),
@@ -94,52 +100,140 @@ story_sections = html.Div([
         html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
+    # =====================================================================
+    # 3º SLIDE: PREDICTING THE UNPREDICTABLE (Monte Carlo)
+    # =====================================================================
     html.Div([
-        # Coluna Esquerda: Texto + Tabela de Impacto
+        # --- COLUNA ESQUERDA: Texto Explicativo ---
         html.Div([
-            html.H1("How can we understand the nature of these events?", style={'color': '#2ecc71', 'fontSize': '3.5em', 'marginBottom': '20px', 'textAlign': 'left'}),
-            html.P("Every analyst has access to news, but there are hidden impacts across sectors and borders. In this specific shock, the Asian market's linkage to Apple reached extreme levels.", style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),
+            html.H1("Predicting the Unpredictable?", 
+                   style={'color': '#3498db', 'fontSize': '3.5em', 'marginBottom': '20px', 'textAlign': 'left', 'fontWeight': 'normal'}),
+            html.P("Even in volatile markets, Monte Carlo Simulation allows us to map the future.", 
+                   style={'color': '#bbb', 'fontSize': '1.8em', 'textAlign': 'left'}),
+            html.P("By projecting thousands of paths based on historical returns, we transform uncertainty into measurable probabilities.", 
+                   style={'color': '#888', 'fontSize': '1.2em', 'textAlign': 'left', 'marginTop': '20px'}),
+        ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+
+        # --- COLUNA DIREITA: Visualização da Simulação ---
+        html.Div([
+            dcc.Graph(
+                id='intro-mc-sim', 
+                config={'displayModeBar': False}, 
+                mathjax=True, 
+                style={'height': '450px', 'width': '100%'}
+            ),
             
-            # Tabela de Valores (Preenchida via Callback)
-            html.Div(id='asia-impact-table', style={'marginTop': '30px', 'width': '100%'}),
-            
-        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+            # --- CAIXAS DE ESTATÍSTICAS NOVAS ---
+            html.Div(style={'width': '100%', 'padding': '15px 0', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-evenly'}, children=[
+                html.Div(dcc.Markdown(id='intro-stat-max', mathjax=True, style={'margin': 0}), style={'color': '#2ecc71', 'border': '1px solid #2ecc71', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(46, 204, 113, 0.05)', 'fontSize': '16px'}),
+                html.Div(dcc.Markdown(id='intro-stat-mean', mathjax=True, style={'margin': 0}), style={'color': "#ffffff", 'border': '1px solid #f1c40f', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(241, 196, 15, 0.05)', 'fontSize': '16px'}),
+                html.Div(dcc.Markdown(id='intro-stat-min', mathjax=True, style={'margin': 0}), style={'color': '#e74c3c', 'border': '1px solid #e74c3c', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(231, 76, 60, 0.05)', 'fontSize': '16px'})
+            ]),
 
-        # Coluna Direita: Mapa + Botão Zoom
-        html.Div([
-            dcc.Graph(id='intro-contagion-map', config={'displayModeBar': False}, style={'height': '550px', 'width': '100%'}),
-            html.Button("ZOOM: ASIA FOCUS", id='zoom-asia-btn', n_clicks=0, 
-                        style={
-                            'marginTop': '20px', 'backgroundColor': 'transparent', 
-                            'color': '#2ecc71', 'border': '1px solid #2ecc71', 
-                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px'
-                        })
-        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
-
-        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
-    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
-
-    html.Div([
-        # Coluna Esquerda: Texto Explicativo
-        html.Div([
-            html.H1("Prever o Imprevisível?", style={'color': '#ddd', 'fontSize': '3.5em', 'marginBottom': '20px', 'textAlign': 'left'}),
-            html.P("Mesmo em mercados voláteis, a Simulação de Monte Carlo permite-nos mapear o futuro.", style={'color': '#bbb', 'fontSize': '1.8em', 'textAlign': 'left'}),
-            html.P("Ao projetar milhares de trajetórias baseadas em retornos históricos, transformamos a incerteza em probabilidades mensuráveis.", style={'color': '#888', 'fontSize': '1.2em', 'textAlign': 'left', 'marginTop': '20px'}),
-        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
-
-        # Coluna Direita: Visualização da Simulação
-        html.Div([
-            dcc.Graph(id='intro-mc-sim', config={'displayModeBar': False}, style={'height': '550px', 'width': '100%'}),
             html.Button("SHOW INDIVIDUAL PATHS", id='mc-paths-btn', n_clicks=0, 
                         style={
-                            'marginTop': '20px', 'backgroundColor': 'transparent', 
+                            'marginTop': '10px', 'backgroundColor': 'transparent', 
                             'color': '#bbb', 'border': '1px solid #555', 
                             'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px', 'borderRadius': '5px'
                         })
-        ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+        ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
 
         html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
+
+    # =====================================================================
+    # 4º SLIDE: GRAFO DA REDE DE CONTÁGIO (Network)
+    # =====================================================================
+    html.Div([
+        # --- COLUNA ESQUERDA: Texto + Legenda ---
+        html.Div([
+            html.H1(
+                "Mapping the Contagion Network",
+                style={
+                    'color': '#f1c40f',
+                    'fontSize': '3.5em', 
+                    'marginBottom': '20px', 
+                    'textAlign': 'left',
+                    'fontWeight': 'normal',
+                    'lineHeight': '1.1'
+                }
+            ),
+            html.P("Geographical borders aren't the only boundaries breached during a crisis. Shocks transmit rapidly across industries and corporate sectors.", 
+                   style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),
+            
+            html.P("By visualizing the market as a network topology, we can identify which assets amplify the crash and which act as defensive shields.", 
+                   style={'color': '#888', 'fontSize': '1.2em', 'textAlign': 'left', 'marginTop': '20px'}),
+
+            # Legenda Explicativa
+            html.Div([
+                html.Div([html.Span("●", style={'color': '#e74c3c', 'marginRight': '10px', 'fontSize': '1.5em'}), html.B("Top (Red): "), "Systemic Risk. Assets that crash alongside the main asset."]),
+                html.Div([html.Span("●", style={'color': '#2ecc71', 'marginRight': '10px', 'fontSize': '1.5em'}), html.B("Bottom (Green): "), "Safe Havens. Assets that protect the portfolio."]),
+                html.Div([html.Span("━", style={'color': '#fff', 'marginRight': '10px', 'fontWeight': 'bold'}), html.B("Line Thickness: "), "Absolute strength of the stress correlation."])
+            ], style={'marginTop': '30px', 'backgroundColor': '#0a0a0a', 'padding': '20px', 'borderRadius': '10px', 'border': '1px solid #333', 'color': '#eee', 'fontSize': '1.2em', 'lineHeight': '2'})
+
+        ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+
+        # --- COLUNA DIREITA: Gráfico do Grafo + Botão ---
+        html.Div([
+            dcc.Graph(
+                id='intro-network-graph', 
+                config={'displayModeBar': False}, 
+                mathjax=True, 
+                style={'height': '550px', 'width': '100%'}
+            ),
+            html.Button("HIGHLIGHT SAFE HAVENS", id='network-highlight-btn', n_clicks=0, 
+                        style={
+                            'marginTop': '20px', 'backgroundColor': 'transparent', 
+                            'color': '#f1c40f', 'border': '1px solid #f1c40f', 
+                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px', 'borderRadius': '5px'
+                        })
+        ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+
+        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
+    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
+
+    # =====================================================================
+    # 5º SLIDE: MAPA (How can we understand...)
+    # =====================================================================
+    html.Div([
+        # --- COLUNA ESQUERDA: Texto + Tabela de Impacto ---
+        html.Div([
+            html.H1(
+                "How can we understand the nature of these events?",
+                style={
+                    'color': '#2ecc71', 
+                    'fontSize': '3.5em', 
+                    'marginBottom': '20px', 
+                    'textAlign': 'left',
+                    'fontWeight': 'normal', 
+                    'lineHeight': '1.1' 
+                }
+            ),
+            html.P("While public news is universally accessible, systemic risks often spread unseen across borders and sectors. During this specific shock, the correlation between Apple and Asian markets spiked to unprecedented levels.", 
+                   style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),            
+            html.Div(id='asia-impact-table', style={'marginTop': '30px', 'width': '100%'}),
+            
+        ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+
+        # --- COLUNA DIREITA: Mapa + Botão Zoom ---
+        html.Div([
+            dcc.Graph(
+                id='intro-contagion-map', 
+                config={'displayModeBar': False}, 
+                mathjax=True, 
+                style={'height': '500px', 'width': '100%'}
+            ),
+            html.Button("ZOOM: ASIA FOCUS", id='zoom-asia-btn', n_clicks=0, 
+                        style={
+                            'marginTop': '0px', 'backgroundColor': 'transparent', 
+                            'color': '#2ecc71', 'border': '1px solid #2ecc71', 
+                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px'
+                        })
+        ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+
+        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
+    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
+
 ])
 
 def get_layout(engine):
@@ -151,7 +245,7 @@ def get_layout(engine):
         dcc.Store(id='mc-es-store'),
         dcc.Store(id='animation-frame', data=0),
         dcc.Store(id='selected-stress-date', data=None),
-        dcc.Interval(id='animation-interval', interval=50, n_intervals=0, disabled=True),
+        dcc.Interval(id='animation-interval', interval=100, n_intervals=0, disabled=True),
 
         html.Div([
             html.H1("SYSTEMIC RISK-NET", style={'margin': '0', 'fontSize': '18px', 'letterSpacing': '2px'}),
