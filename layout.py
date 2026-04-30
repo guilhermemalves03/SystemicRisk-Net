@@ -226,7 +226,7 @@ story_sections = html.Div([
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
 
         html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
-    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
+    ], style=dict(story_style, **{'flexDirection': 'row-reverse', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
     # =====================================================================
     # 5º SLIDE: MAPA (How can we understand...)
