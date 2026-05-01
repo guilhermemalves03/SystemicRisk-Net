@@ -20,32 +20,36 @@ COUNTRY_COORDS = {
     'Kenya': [-1.3, 36.8], 'Morocco': [31.8, -7.1]
 }
 
+# =====================================================================
+# ESTILOS
+# =====================================================================
+
 explanation_box_style = {
     'width': '450px', 
     'minWidth': '450px', 
-    'border': '1px solid #34495e',             # Azul acinzentado sóbrio
+    'border': '1px solid #34495e',
     'borderRadius': '12px', 
     'padding': '25px', 
     'marginLeft': '20px',
-    'backgroundColor': 'rgba(52, 73, 94, 0.2)', # Fundo muito sutil
-    'color': '#ecf0f1',                        # Branco levemente acinzentado (mais calmo)
+    'backgroundColor': 'rgba(52, 73, 94, 0.2)',
+    'color': '#ecf0f1',
     'fontFamily': '"EB Garamond", serif',
     'fontSize': '17px', 
     'lineHeight': '1.6', 
     'boxSizing': 'border-box',
-    'boxShadow': '0 4px 15px rgba(0,0,0,0.3)'   # Sombra leve para dar profundidade
+    'boxShadow': '0 4px 15px rgba(0,0,0,0.3)'
 }
 
 # Ajustado para calc(100vh - 60px) para não criar barra de scroll dupla por causa das abas
 story_style = {
-    'height': 'calc(100vh - 60px)', 
+    'height': 'calc(100vh - 50px)', 
     'display': 'flex', 
     'flexDirection': 'column', 
     'justifyContent': 'center', 
     'alignItems': 'center',
-    'padding': '-100px 20% 0 20%',
+    'padding': '0 5%', # Removido o valor negativo
     'textAlign': 'center',
-    'scrollSnapAlign': 'start',
+    'scrollSnapAlign': 'start', # Íman que cola ao topo
     'borderBottom': '1px solid #111',
     'position': 'relative',
     'boxSizing': 'border-box'
@@ -83,6 +87,10 @@ tab_selected_style = {
     'letterSpacing': '1px'
 }
 
+# =====================================================================
+# STORY SECTIONS (A Div pai agora controla o scroll)
+# =====================================================================
+
 story_sections = html.Div([
     
     # =====================================================================
@@ -97,7 +105,7 @@ story_sections = html.Div([
     ], style=story_style),
     
     # =====================================================================
-    # 2º SLIDE: WHAT IS AN EXTREME EVENT? (Distribuição e Caixas de Texto)
+    # 2º SLIDE: WHAT IS AN EXTREME EVENT?
     # =====================================================================
     html.Div([
         # Coluna Esquerda: Gráfico
@@ -105,16 +113,16 @@ story_sections = html.Div([
             dcc.Graph(id='intro-apple-dist', config={'displayModeBar': False},mathjax=True, style={'height': '550px', 'width': '100%'}),
             html.Button("ZOOM: LEFT TAIL", id='zoom-btn-intro', n_clicks=0, 
                 style={
-                            'marginTop': '20px', 
-                            'transform': 'translateX(-50px)',
-                            'backgroundColor': 'transparent', 
-                            'color': '#e74c3c',               
-                            'border': '1px solid #e74c3c',    
-                            'padding': '10px 20px', 
-                            'cursor': 'pointer', 
-                            'fontSize': '14px',
-                            'borderRadius': '5px'             
-                        })
+                    'marginTop': '20px', 
+                    'transform': 'translateX(-50px)',
+                    'backgroundColor': 'transparent', 
+                    'color': '#e74c3c',               
+                    'border': '1px solid #e74c3c',    
+                    'padding': '10px 20px', 
+                    'cursor': 'pointer', 
+                    'fontSize': '14px',
+                    'borderRadius': '5px'            
+                })
         ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
         # Coluna Direita: Texto e Eventos
         html.Div([
@@ -149,7 +157,7 @@ story_sections = html.Div([
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
     # =====================================================================
-    # 3º SLIDE: PREDICTING THE UNPREDICTABLE (Monte Carlo)
+    # 3º SLIDE: PREDICTING THE UNPREDICTABLE
     # =====================================================================
     html.Div([
         # --- COLUNA ESQUERDA: Texto Explicativo ---
@@ -187,7 +195,7 @@ story_sections = html.Div([
                             'padding': '10px 20px', 
                             'cursor': 'pointer', 
                             'fontSize': '14px',
-                            'borderRadius': '5px'             
+                            'borderRadius': '5px'            
                         })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
 
@@ -198,14 +206,14 @@ story_sections = html.Div([
     # 4º SLIDE: GRAFO DA REDE DE CONTÁGIO (Network)
     # =====================================================================
     html.Div([
-# --- COLUNA ESQUERDA: Texto + Legenda ---
+        # --- COLUNA ESQUERDA: Texto + Legenda ---
         html.Div([
             html.H1(
                 "Mapping the Contagion Network",
                 style={
                     'color': '#f1c40f',
                     'fontSize': '3.5em', 
-                    'marginBottom': '15px',  # <-- REDUZIDO DE 20px PARA 10px
+                    'marginBottom': '15px',
                     'textAlign': 'left',
                     'fontWeight': 'normal',
                     'lineHeight': '1.1',
@@ -217,8 +225,8 @@ story_sections = html.Div([
                        'color': '#bbb', 
                        'fontSize': '1.6em', 
                        'textAlign': 'left',
-                       'marginTop': '0px',     # <-- Remove margem extra do browser
-                       'marginBottom': '15px'  # <-- Espaço pequeno antes do próximo parágrafo
+                       'marginTop': '0px',
+                       'marginBottom': '15px'
                    }),
             
             html.P("By visualizing the market as a network topology, we can identify which assets amplify the crash and which act as defensive shields.", 
@@ -226,13 +234,12 @@ story_sections = html.Div([
                        'color': '#888', 
                        'fontSize': '1.2em', 
                        'textAlign': 'left', 
-                       'marginTop': '15px',     # <-- REDUZIDO DE 20px PARA 0px
+                       'marginTop': '15px',
                        'marginBottom': '0px'
                    }),
 
             # Legenda Explicativa
             html.Div([
-                # ... (interior da legenda mantém-se igual) ...
                 # Linha 1: Top (Red)
                 html.Div([
                     html.Span("●", style={'color': '#e74c3c', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.5em', 'textAlign': 'center'}),
@@ -252,7 +259,7 @@ story_sections = html.Div([
                 ], style={'display': 'flex', 'alignItems': 'center'})
 
             ], style={
-                'marginTop': '20px', # <-- REDUZIDO DE 30px PARA 15px (Aproxima a caixa do texto)
+                'marginTop': '20px', 
                 'backgroundColor': '#0a0a0a', 
                 'padding': '30px', 
                 'borderRadius': '10px', 
@@ -323,9 +330,15 @@ story_sections = html.Div([
                         })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
 
-    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%', 'borderBottom': 'none'})), # Border removed on last slide
+    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%', 'borderBottom': 'none'})), 
 
-])
+], style={
+    'height': 'calc(100vh - 50px)',  # <- A Altura da área de apresentação
+    'overflowY': 'scroll',           # <- Garante que só fazemos scroll aqui dentro
+    'scrollSnapType': 'y mandatory', # <- ATIVA O EFEITO ÍMAN
+    'backgroundColor': '#000',
+    'overflowX': 'hidden'            # <- Evita qualquer scroll horizontal acidental
+})
 
 def get_layout(engine):
     options = [{'label': f"{r['name']} ({r['ticker']})", 'value': r['ticker']} 
@@ -545,34 +558,57 @@ Assets that exhibit $\Delta \rho < 0$ **and** $\rho_{\text{stress}} \le 0$ act a
     ])
 
     # 3. O LAYOUT FINAL A ENVOLVER AS ABAS
-    return html.Div([
-    # LADO ESQUERDO
-    html.Div([
-        dcc.Dropdown(
-            id='main-asset-dropdown',
-            options=options,
-            value='AAPL',
-            clearable=False,
-            style={'color': '#000'}
-        )
-    ], style={'width': '300px', 'marginLeft': '20px'}),
+    # ==========================================
+    # ESTILOS DAS ABAS (Para resolver a visibilidade e tamanho)
+    # ==========================================
+    estilo_aba_inativa = {
+        'backgroundColor': '#222222', # Fundo cinzento escuro para se ver bem que é um botão
+        'color': '#888888',           # Letra cinzenta clara
+        'fontSize': '18px',           # Aumenta o tamanho da letra (podes ajustar este valor!)
+        'fontWeight': 'bold',
+        'border': '1px solid #333',   # Borda suave
+        'padding': '12px'             # Espaço interno confortável
+    }
 
-    # LADO DIREITO
-    html.H1(
-        "SYSTEMIC RISK-NET", 
-        style={
-            'margin': '0', 
-            'color': '#ffffff', 
-            'fontFamily': 'sans-serif', 
-            'letterSpacing': '2px',
-            'marginRight': '20px'
-        }
-    )
-], style={
-    'display': 'flex', 
-    'justifyContent': 'space-between', 
-    'alignItems': 'center',
-    'padding': '10px 0', 
-    'backgroundColor': '#111111',
-    'borderBottom': '1px solid #333'
-})
+    estilo_aba_ativa = {
+        'backgroundColor': '#111111', # Fundo igual ao resto da dashboard
+        'color': '#39FF14',           # O teu verde neon para destacar a aba escolhida!
+        'fontSize': '18px',           # Mesmo tamanho de letra
+        'fontWeight': 'bold',
+        'borderTop': '3px solid #39FF14', # Uma barra verde grossa no topo para estilo
+        'borderBottom': 'none',
+        'borderLeft': '1px solid #333',
+        'borderRight': '1px solid #333',
+        'padding': '12px'
+    }
+
+    # ==========================================
+    # O RETURN FINAL SEGURO
+    # ==========================================
+    return html.Div([
+        stores_and_modals, 
+        
+        dcc.Tabs(
+            id="main-tabs",
+            value='tab-story', 
+            children=[
+                # --- ABA 1 ---
+                dcc.Tab(
+                    label='Story Mode', 
+                    value='tab-story',
+                    style=estilo_aba_inativa,
+                    selected_style=estilo_aba_ativa,
+                    children=[story_sections] 
+                ),
+                # --- ABA 2 ---
+                dcc.Tab(
+                    label='Main Dashboard', 
+                    value='tab-main',
+                    style=estilo_aba_inativa,
+                    selected_style=estilo_aba_ativa,
+                    children=[dashboard_content] 
+                )
+            ],
+            style={'backgroundColor': '#111111'} # Fundo do contentor das abas
+        )
+    ])
