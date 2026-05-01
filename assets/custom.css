@@ -21,3 +21,23 @@
     animation: bounce 2s infinite;
     width: 100%;
 }
+
+.clicavel .js-plotly-plot .plotly .nsewdrag {
+    cursor: pointer !important;
+}
+
+body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100vh;
+    width: 100vw;
+    background-color: #000000; /* Pinta o fundo base de preto para evitar qualquer "flash" branco */
+    overflow-x: hidden; /* Evita que apareça uma barra de scroll horizontal sem querer */
+}
+
+
+.meu-titulo-latex h1 {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 24px !important; /* Podes ajustar o tamanho da letra aqui se quiseres! */
+}
