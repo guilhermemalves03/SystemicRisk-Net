@@ -413,8 +413,8 @@ def register_callbacks(app, engine):
         for i in range(len(map_rows)):
             t = np.linspace(0, 2*np.pi, 50)
             cx, cy = new_x[i] + radii[i] * np.cos(t), new_y[i] + radii[i] * np.sin(t)
-            fig_map.add_trace(go.Scatter(x=cx, y=cy, fill='toself', fillcolor=colors[i], line=dict(color='white', width=1.5), mode='lines', name=map_rows[i]['Country'], text=f"<b>{map_rows[i]['Country']}</b><br>Δρ: {c_vals[i]:.2f}", hoverinfo='text', showlegend=False))
-            fig_map.add_trace(go.Scatter(x=[new_x[i]], y=[new_y[i]], mode='text', text=[map_rows[i]['Ticker']], textfont=dict(color='white', size=11, family="sans-serif"), hoverinfo='skip', showlegend=False))
+            fig_map.add_trace(go.Scatter(x=cx, y=cy, fill='toself', fillcolor=colors[i], line=dict(color=colors[i], width=1.5), mode='lines', name=map_rows[i]['Country'], text=f"<b>{map_rows[i]['Country']}</b><br>Δρ: {c_vals[i]:.2f}", hoverinfo='text', showlegend=False))
+            fig_map.add_trace(go.Scatter(x=[new_x[i]], y=[new_y[i]], mode='text', text=[map_rows[i]['Ticker']], textfont=dict(color='black', size=11, family="sans-serif"), hoverinfo='skip', showlegend=False))
 
         # 4. LAYOUT FINAL E ANIMAÇÃO
         fig_map.update_layout(
@@ -508,8 +508,8 @@ def register_callbacks(app, engine):
         for i in range(len(map_rows)):
             t = np.linspace(0, 2*np.pi, 50)
             cx, cy = new_x[i] + radii[i] * np.cos(t), new_y[i] + radii[i] * np.sin(t)
-            fig_map.add_trace(go.Scatter(x=cx, y=cy, fill='toself', fillcolor=colors[i], line=dict(color='white', width=1.5), mode='lines', name=map_rows[i]['Country'], text=f"<b>{map_rows[i]['Country']}</b><br>Metric: {c_vals[i]:.2f}<br>Δ Volume: {v_vals[i]:.2%}", customdata=[map_rows[i]['Ticker']] * len(cx), hoverinfo='text', showlegend=False))
-            fig_map.add_trace(go.Scatter(x=[new_x[i]], y=[new_y[i]], mode='text', text=[map_rows[i]['Ticker']], textfont=dict(color='white', size=11, family="sans-serif"), hoverinfo='skip', showlegend=False))
+            fig_map.add_trace(go.Scatter(x=cx, y=cy, fill='toself', fillcolor=colors[i], line=dict(color=colors[i], width=1.5), mode='lines', name=map_rows[i]['Country'], text=f"<b>{map_rows[i]['Country']}</b><br>Metric: {c_vals[i]:.2f}<br>Δ Volume: {v_vals[i]:.2%}", customdata=[map_rows[i]['Ticker']] * len(cx), hoverinfo='text', showlegend=False))
+            fig_map.add_trace(go.Scatter(x=[new_x[i]], y=[new_y[i]], mode='text', text=[map_rows[i]['Ticker']], textfont=dict(color='black', size=11, family="sans-serif"), hoverinfo='skip', showlegend=False))
 
         fig_map.add_trace(go.Scatter(x=[None], y=[None], mode='markers', marker=dict(colorscale='RdBu_r', cmin=-1, cmax=1, showscale=True, colorbar=dict(title="ρ", thickness=15)), hoverinfo='none', showlegend=False))
         fig_map.update_layout(title=rf"$\text{{Systemic Risk Cartogram - }} {target_date}$", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=50, b=10))

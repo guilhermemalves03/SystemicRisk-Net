@@ -490,7 +490,7 @@ A espessura da ligação representa a força absoluta da correlação ($\rho_{\t
                         html.Div([
                             html.Div([
                                 html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                                html.Div(id='extreme-dates-list-map', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                                html.Div(id='extreme-dates-list-map', className='custom-radio', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
                             ], style={'marginBottom': '20px'}),
                             
                             html.Hr(style={'borderColor': '#333', 'margin': '0 0 15px 0', 'width': '100%'}),
@@ -528,7 +528,7 @@ A espessura da ligação representa a força absoluta da correlação ($\rho_{\t
                                 )
                             ], style={'padding': '5px 20px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'alignItems': 'center'}),
                             
-                            dcc.Graph(id='contagion-map', style={'flex': '1', 'minHeight': '500px'}, mathjax=True, config={'displayModeBar': False})
+                            dcc.Graph(id='contagion-map',className='clicavel', style={'flex': '1', 'minHeight': '500px'}, mathjax=True, config={'displayModeBar': False})
                         ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
                     ], style={'display': 'flex', 'minHeight': '600px', 'backgroundColor': '#000'}),
 

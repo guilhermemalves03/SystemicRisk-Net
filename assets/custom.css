@@ -1,11 +1,24 @@
-.custom-radio input[type="radio"] {
-    display: none;
-}
-.custom-radio input[type="radio"]:checked + span {
-    color: #39FF14;
-    font-weight: bold;
+/* ========================================= */
+/* 1. CONFIGURAÇÕES GERAIS DA PÁGINA         */
+/* ========================================= */
+body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100vh;
+    width: 100vw;
+    background-color: #000000;
+    overflow-x: hidden; 
 }
 
+.meu-titulo-latex h1 {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 24px !important; 
+}
+
+/* ========================================= */
+/* 2. ANIMAÇÕES (Scroll Indicator)           */
+/* ========================================= */
 @keyframes bounce {
     0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
     40% { transform: translateY(-10px); }
@@ -22,22 +35,25 @@
     width: 100%;
 }
 
+/* ========================================= */
+/* 3. BOTÕES RÁDIO (Cor Roxa no Texto)       */
+/* ========================================= */
+/* Esconde a bolinha padrão do rádio */
+.custom-radio input[type="radio"] {
+    display: none;
+}
+
+/* Força a etiqueta E qualquer span dentro dela a ficarem roxos */
+.custom-radio label:has(input[type="radio"]:checked),
+.custom-radio label:has(input[type="radio"]:checked) * {
+    color: #b162ff !important;
+    font-weight: bold !important;
+}
+
+/* ========================================= */
+/* 4. MAPA PLOTLY (Cursor Mãozinha)          */
+/* ========================================= */
+/* Transforma o cursor numa mãozinha APENAS em cima dos pontos (bolas) do mapa */
 .clicavel .js-plotly-plot .plotly .nsewdrag {
     cursor: pointer !important;
-}
-
-body, html {
-    margin: 0 !important;
-    padding: 0 !important;
-    height: 100vh;
-    width: 100vw;
-    background-color: #000000; /* Pinta o fundo base de preto para evitar qualquer "flash" branco */
-    overflow-x: hidden; /* Evita que apareça uma barra de scroll horizontal sem querer */
-}
-
-
-.meu-titulo-latex h1 {
-    margin: 0 !important;
-    padding: 0 !important;
-    font-size: 24px !important; /* Podes ajustar o tamanho da letra aqui se quiseres! */
 }
