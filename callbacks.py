@@ -241,8 +241,8 @@ def register_callbacks(app, engine):
             month_data = df_returns[df_returns['Month'] == month]['return']
             if len(month_data) > 2:
                 m_ret = month_data.mean()
-                month_label = f"{month.strftime('%b %Y')} (Q{month.quarter})"
-                fig_ridge.add_trace(go.Violin(x=month_data, y=[month_label] * len(month_data), name=month_label, line_color='white', line_width=1, fillcolor=colors[i], opacity=0.9, side='positive', width=3.5, orientation='h', points=False, showlegend=False))
+                month_label = f"{month.strftime('%b %Y')}"
+                fig_ridge.add_trace(go.Violin(x=month_data, y=[month_label] * len(month_data), name=month_label, line_color='white', line_width=1, fillcolor=colors[i], opacity=0.9, side='positive', width=3.5, orientation='h', points=False, showlegend=False, hoverinfo='skip'))
                 fig_ridge.add_annotation(x=m_ret, y=month_label, text=f"μ: {m_ret*100:.2f}%", showarrow=False, yshift=18, bgcolor="rgba(0,0,0,0.7)", bordercolor=colors[i], font=dict(color="white", size=11, family="sans-serif"))
         
         fig_ridge.update_layout(title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", xaxis_title=r"$\Delta \ln(P_t)$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=20, t=30, b=40), violingap=0, violingroupgap=0, violinmode='overlay')
@@ -290,7 +290,30 @@ def register_callbacks(app, engine):
             fig_dist_main, fig_ridge, list_items, list_items_clickable, main_paths.tolist(), sim_es, False, 0  # Os 8 da Dashboard
         )
     
-
+    @app.callback(
+        [Output('container-distribution', 'style'),
+        Output('container-ridgeline', 'style'),
+        Output('toggle-risk-graphs-btn', 'children')],
+        [Input('toggle-risk-graphs-btn', 'n_clicks')]
+    )
+    def toggle_risk_graphs(n_clicks):
+        # O estilo quando a caixa deve aparecer
+        estilo_visivel = {'display': 'flex', 'flexDirection': 'column', 'width': '100%'}
+        # O estilo quando a caixa deve desaparecer completamente
+        estilo_escondido = {'display': 'none'}
+        
+        # Se o número de cliques for par (ou 0 ao iniciar)
+        if n_clicks % 2 == 0:
+            texto_botao = "SHOW RIDGELINE PLOT"
+            # Mostra o Distribution, esconde o Ridgeline
+            return estilo_visivel, estilo_escondido, texto_botao
+            
+        # Se o número de cliques for ímpar
+        else:
+            texto_botao = "SHOW DISTRIBUTION PLOT"
+            # Esconde o Distribution, mostra o Ridgeline
+            return estilo_escondido, estilo_visivel, texto_botao
+        
     @app.callback(
         [Output('intro-apple-dist', 'figure', allow_duplicate=True),
          Output('zoom-btn-intro', 'children')], # <-- NOVO: Controlar o texto do botão
@@ -511,8 +534,8 @@ def register_callbacks(app, engine):
             fig_map.add_trace(go.Scatter(x=cx, y=cy, fill='toself', fillcolor=colors[i], line=dict(color=colors[i], width=1.5), mode='lines', name=map_rows[i]['Country'], text=f"<b>{map_rows[i]['Country']}</b><br>Metric: {c_vals[i]:.2f}<br>Δ Volume: {v_vals[i]:.2%}", customdata=[map_rows[i]['Ticker']] * len(cx), hoverinfo='text', showlegend=False))
             fig_map.add_trace(go.Scatter(x=[new_x[i]], y=[new_y[i]], mode='text', text=[map_rows[i]['Ticker']], textfont=dict(color='black', size=11, family="sans-serif"), hoverinfo='skip', showlegend=False))
 
-        fig_map.add_trace(go.Scatter(x=[None], y=[None], mode='markers', marker=dict(colorscale='RdBu_r', cmin=-1, cmax=1, showscale=True, colorbar=dict(title="ρ", thickness=15)), hoverinfo='none', showlegend=False))
-        fig_map.update_layout(title=rf"$\text{{Systemic Risk Cartogram - }} {target_date}$", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=50, b=10))
+        fig_map.add_trace(go.Scatter(x=[None], y=[None], mode='markers', marker=dict(colorscale='RdBu_r', cmin=-1, cmax=1, showscale=True, colorbar=dict(title="ρ", thickness=15, orientation="h", yanchor="bottom",y=0,xanchor="center",x=0.5,len=0.6 )), hoverinfo='none', showlegend=False))
+        fig_map.update_layout(title=rf"$\text{{Systemic Risk Cartogram - }} {target_date}$", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=120, b=0))
 
         safe_havens = sorted([row for row in map_rows if row['Delta'] < 0 and row['Stress'] <= 0], key=lambda x: x['Stress'])
         

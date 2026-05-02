@@ -410,9 +410,38 @@ def get_layout(engine):
                         ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
                         
                         html.Div([
-                            dcc.Graph(id='distribution-graph', style={'flex': '1', 'minHeight': '400px'}, mathjax=True, config={'displayModeBar': False}),
-                            dcc.Graph(id='ridgeline-graph', style={'flex': '1', 'minHeight': '500px', 'borderTop': '1px solid #222'}, mathjax=True, config={'displayModeBar': False})
-                        ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'})
+                            # CAIXA FORTE DOS GRÁFICOS (Garante que a altura não muda e o botão não salta)
+                            html.Div([
+                                # CAIXA 1: Distribution Graph
+                                html.Div([
+                                    dcc.Graph(id='distribution-graph', style={'height': '550px', 'width': '100%'}, mathjax=True, config={'displayModeBar': False})
+                                ], id='container-distribution', style={'display': 'flex', 'flexDirection': 'column', 'width': '100%', 'height': '100%'}),
+                                
+                                # CAIXA 2: Ridgeline Graph
+                                html.Div([
+                                    dcc.Graph(id='ridgeline-graph', style={'height': '550px', 'width': '100%'}, mathjax=True, config={'displayModeBar': False})
+                                ], id='container-ridgeline', style={'display': 'none', 'flexDirection': 'column', 'width': '100%', 'height': '100%'}),
+                            ], style={'height': '550px', 'width': '100%'}), # <--- O segredo está aqui: altura trancada!
+
+                            # O BOTÃO DE ALTERNÂNCIA (Agora imune aos saltos)
+                            html.Button(
+                                "SHOW RIDGELINE PLOT ➔", 
+                                id='toggle-risk-graphs-btn', 
+                                n_clicks=0, 
+                                style={
+                                    'marginTop': '25px', 
+                                    'backgroundColor': 'transparent', 
+                                    'color': '#f1c40f',               
+                                    'border': '1px solid #f1c40f',    
+                                    'padding': '10px 20px', 
+                                    'cursor': 'pointer', 
+                                    'fontSize': '14px',
+                                    'borderRadius': '5px',
+                                    'fontWeight': 'bold',
+                                    'alignSelf': 'center'             
+                                }
+                            )
+                        ], style={'display': 'flex', 'flexDirection': 'column', 'flex': '1', 'alignItems': 'center'})
                     ], style={'display': 'flex', 'flex': '1', 'backgroundColor': '#000'}),
                     
                     html.Div([
@@ -486,7 +515,11 @@ A espessura da ligação representa a força absoluta da correlação ($\rho_{\t
 
             dcc.Tab(label='Global Contagion', value='tab-map', children=[
                 html.Div([
+                    
+                    # === CONTAINER PRINCIPAL (AGORA COM 3 COLUNAS LADO A LADO) ===
                     html.Div([
+                        
+                        # --- COLUNA 1: Barra Lateral Esquerda (Stress Events / Safe Havens) ---
                         html.Div([
                             html.Div([
                                 html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
@@ -501,6 +534,7 @@ A espessura da ligação representa a força absoluta da correlação ($\rho_{\t
                             ])
                         ], style={'width': '250px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
                         
+                        # --- COLUNA 2: Centro (Botões de Rádio e Mapa) ---
                         html.Div([
                             html.Div([
                                 dcc.RadioItems(
@@ -528,28 +562,34 @@ A espessura da ligação representa a força absoluta da correlação ($\rho_{\t
                                 )
                             ], style={'padding': '5px 20px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'alignItems': 'center'}),
                             
-                            dcc.Graph(id='contagion-map',className='clicavel', style={'flex': '1', 'minHeight': '500px'}, mathjax=True, config={'displayModeBar': False})
+                            dcc.Graph(id='contagion-map', className='clicavel', style={'flex': '1', 'minHeight': '500px'}, mathjax=True, config={'displayModeBar': False})
                         ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
-                    ], style={'display': 'flex', 'minHeight': '600px', 'backgroundColor': '#000'}),
-
-                    html.Div([
-                        html.H3("SYSTEMIC RISK", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
-                        dcc.Markdown(r"""
+                        
+                        # --- COLUNA 3: Direita (Caixa de Texto "SYSTEMIC RISK") ---
+                        html.Div([
+                            html.H3("SYSTEMIC RISK", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
+                            dcc.Markdown(r"""
 Dorling Cartogram (Circles = Trading Volume).
 Contagion analysis on specific events ($\pm 15$ days). The correlation shock is defined by:
 
 $$\Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}}$$
 
 Assets that exhibit $\Delta \rho < 0$ **and** $\rho_{\text{stress}} \le 0$ act as true *Safe Havens* during main market crashes.
-                        """, mathjax=True)
-                    ], style=dict(explanation_box_style, **{
-                        'width': '100%', 
-                        'minWidth': '100%', 
-                        'marginLeft': '0', 
-                        'marginTop': '20px', 
-                        'height': 'auto'
-                    }))
-                    
+                            """, mathjax=True)
+                        ], style=dict(explanation_box_style, **{
+                            'width': '300px',            
+                            'minWidth': '300px', 
+                            'marginLeft': '15px',        
+                            'marginTop': '0',            
+                            'height': 'auto',
+                            'display': 'flex',
+                            'flexDirection': 'column',
+                            # REMOVIDO: 'justifyContent': 'center' <- Era isto que centrava o texto
+                            'justifyContent': 'flex-start' # Força o alinhamento ao topo
+                        }))
+                        
+                    ], style={'display': 'flex', 'flexDirection': 'row', 'minHeight': '600px', 'backgroundColor': '#000', 'alignItems': 'stretch'}), # 'alignItems': 'stretch' garante que todas as colunas têm a mesma altura
+
                 ], style={'display': 'flex', 'flexDirection': 'column', 'minHeight': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box'})
             ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
                selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #2ecc71', 'borderBottom': 'none', 'padding': '10px'})
