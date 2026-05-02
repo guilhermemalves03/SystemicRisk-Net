@@ -492,11 +492,35 @@ $$ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}]$$
                selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #3498db', 'borderBottom': 'none', 'padding': '10px'}),
 
             dcc.Tab(label='Market Connections', value='tab-network', children=[
+                
+                # MEMÓRIA INVISÍVEL: Guarda a data que está atualmente selecionada
+                dcc.Store(id='selected-network-date', data=None),
+                dcc.Store(id='node-click-memory', data=None),
+
+                # === CONTAINER PRINCIPAL ===
                 html.Div([
+                    
+                    # --- COLUNA 1: Esquerda (Lista de Datas Clicáveis) ---
                     html.Div([
-                        dcc.Graph(id='network-graph', className='clicavel', style={ 'height': '100%'}, config={'displayModeBar': False})
+                        html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
+                        html.Div(id='extreme-dates-list-network', style={'maxHeight': '500px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                    ], style={
+                        'width': '250px', 'minWidth': '250px', 'padding': '15px', 
+                        'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a', 
+                        'boxSizing': 'border-box'
+                    }),
+                    
+                    # --- COLUNA 2: Centro (Grafo) ---
+                    html.Div([
+                        dcc.Graph(
+                            id='network-graph', 
+                            className='clicavel', 
+                            style={'flex': '1', 'width': '100%', 'height': '100%'}, 
+                            config={'displayModeBar': False}
+                        )
                     ], style={'flex': '1', 'backgroundColor': '#000', 'display': 'flex', 'flexDirection': 'column'}),
                     
+                    # --- COLUNA 3: Direita (Caixa de Texto) ---
                     html.Div([
                         html.H3("CONTAGION TOPOLOGY", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
                         dcc.Markdown(r"""
@@ -509,88 +533,103 @@ A espessura da ligação representa a força absoluta da correlação ($\rho_{\t
                         """, mathjax=True)
                     ], style=explanation_box_style)
                     
-                ], style={'display': 'flex', 'minHeight': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box'})
+                ], style={'display': 'flex', 'flexDirection': 'row', 'alignItems': 'stretch', 'minHeight': 'calc(100vh - 164px)', 'backgroundColor': '#000', 'padding': '15px', 'boxSizing': 'border-box'})
+                
             ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
                selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #f1c40f', 'borderBottom': 'none', 'padding': '10px'}),
-
+            
             dcc.Tab(label='Global Contagion', value='tab-map', children=[
+                dcc.Store(id='selected-map-date', data=None),
+                # === A LINHA MESTRA (Garante que todas as colunas vão até ao chão) ===
                 html.Div([
                     
-                    # === CONTAINER PRINCIPAL (AGORA COM 3 COLUNAS LADO A LADO) ===
+                    # --- COLUNA 1: Esquerda (Stress Events / Fundo preto) ---
+                    html.Div([
+                        html.Div([
+                            html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
+                            html.Div(id='extreme-dates-list-map', className='custom-radio', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                        ], style={'marginBottom': '20px'}),
+                        
+                        html.Hr(style={'borderColor': '#333', 'margin': '0 0 15px 0', 'width': '100%'}),
+                        
+                        html.Div([
+                            html.H3("SAFE HAVENS", style={'fontSize': '11px', 'color': '#2ecc71', 'marginBottom': '10px'}),
+                            html.Div(id='safe-havens-list', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                        ])
+                    ], style={
+                        'width': '250px', 'minWidth': '250px', 'padding': '15px', 
+                        'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a', 
+                        'boxSizing': 'border-box'
+                        # SEM 'height' definido. O 'stretch' puxa a cor de fundo até abaixo!
+                    }),
+                    
+                    # --- COLUNA 2: Centro (Mapa e Botões) ---
                     html.Div([
                         
-                        # --- COLUNA 1: Barra Lateral Esquerda (Stress Events / Safe Havens) ---
+                        # Barra superior com botões
                         html.Div([
-                            html.Div([
-                                html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                                html.Div(id='extreme-dates-list-map', className='custom-radio', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
-                            ], style={'marginBottom': '20px'}),
-                            
-                            html.Hr(style={'borderColor': '#333', 'margin': '0 0 15px 0', 'width': '100%'}),
-                            
-                            html.Div([
-                                html.H3("SAFE HAVENS", style={'fontSize': '11px', 'color': '#2ecc71', 'marginBottom': '10px'}),
-                                html.Div(id='safe-havens-list', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
-                            ])
-                        ], style={'width': '250px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
+                            dcc.RadioItems(
+                                id='map-vis-type',
+                                className='custom-radio',
+                                options=[
+                                    {'label': ' Δρ (Shock) ', 'value': 'delta'},
+                                    {'label': ' ρ (Stress) ', 'value': 'stress'},
+                                    {'label': ' ρ (Calm) ', 'value': 'calm'}
+                                ],
+                                value='delta', inline=True, style={'color': 'white', 'marginRight': '30px', 'fontSize': '15px'},
+                                labelStyle={'color': 'white', 'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e'}
+                            ),
+                            html.Span("Pre-shock Calm Period: ", style={'color': 'white', 'fontSize': '14px', 'marginRight': '10px'}),
+                            dcc.RadioItems(
+                                id='calm-period-selector',
+                                className='custom-radio',
+                                options=[
+                                    {'label': ' 1 Month ', 'value': '1M'},
+                                    {'label': ' 3 Months ', 'value': '3M'},
+                                    {'label': ' 1 Year ', 'value': '1Y'}
+                                ],
+                                value='3M', inline=True, style={'color': 'white', 'fontSize': '15px'},
+                                labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e', 'color': 'white'}
+                            )
+                        ], style={'padding': '5px 20px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'alignItems': 'center'}),
                         
-                        # --- COLUNA 2: Centro (Botões de Rádio e Mapa) ---
+                        # Contentor do Mapa
                         html.Div([
-                            html.Div([
-                                dcc.RadioItems(
-                                    id='map-vis-type',
-                                    className='custom-radio',
-                                    options=[
-                                        {'label': ' Δρ (Shock) ', 'value': 'delta'},
-                                        {'label': ' ρ (Stress) ', 'value': 'stress'},
-                                        {'label': ' ρ (Calm) ', 'value': 'calm'}
-                                    ],
-                                    value='delta', inline=True, style={'color': 'white', 'marginRight': '30px', 'fontSize': '15px'},
-                                    labelStyle={'color': 'white', 'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e'}
-                                ),
-                                html.Span("Pre-shock Calm Period: ", style={'color': 'white', 'fontSize': '14px', 'marginRight': '10px'}),
-                                dcc.RadioItems(
-                                    id='calm-period-selector',
-                                    className='custom-radio',
-                                    options=[
-                                        {'label': ' 1 Month ', 'value': '1M'},
-                                        {'label': ' 3 Months ', 'value': '3M'},
-                                        {'label': ' 1 Year ', 'value': '1Y'}
-                                    ],
-                                    value='3M', inline=True, style={'color': 'white', 'fontSize': '15px'},
-                                    labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e', 'color': 'white'}
-                                )
-                            ], style={'padding': '5px 20px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'alignItems': 'center'}),
-                            
-                            dcc.Graph(id='contagion-map', className='clicavel', style={'flex': '1', 'minHeight': '500px'}, mathjax=True, config={'displayModeBar': False})
-                        ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
+                            dcc.Graph(
+                                id='contagion-map', 
+                                className='clicavel', 
+                                mathjax=True, 
+                                config={'displayModeBar': False},
+                                style={'flex': '1', 'width': '100%', 'height': '100%'} # Isto obriga o mapa a encher a tela vazia
+                            )
+                        ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'})
                         
-                        # --- COLUNA 3: Direita (Caixa de Texto "SYSTEMIC RISK") ---
-                        html.Div([
-                            html.H3("SYSTEMIC RISK", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
-                            dcc.Markdown(r"""
+                    ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'backgroundColor': '#000'}),
+                    
+                    # --- COLUNA 3: Direita (Caixa de Texto) ---
+                    html.Div([
+                        html.H3("SYSTEMIC RISK", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
+                        dcc.Markdown(r"""
 Dorling Cartogram (Circles = Trading Volume).
 Contagion analysis on specific events ($\pm 15$ days). The correlation shock is defined by:
 
 $$\Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}}$$
 
 Assets that exhibit $\Delta \rho < 0$ **and** $\rho_{\text{stress}} \le 0$ act as true *Safe Havens* during main market crashes.
-                            """, mathjax=True)
-                        ], style=dict(explanation_box_style, **{
-                            'width': '300px',            
-                            'minWidth': '300px', 
-                            'marginLeft': '15px',        
-                            'marginTop': '0',            
-                            'height': 'auto',
-                            'display': 'flex',
-                            'flexDirection': 'column',
-                            # REMOVIDO: 'justifyContent': 'center' <- Era isto que centrava o texto
-                            'justifyContent': 'flex-start' # Força o alinhamento ao topo
-                        }))
-                        
-                    ], style={'display': 'flex', 'flexDirection': 'row', 'minHeight': '600px', 'backgroundColor': '#000', 'alignItems': 'stretch'}), # 'alignItems': 'stretch' garante que todas as colunas têm a mesma altura
-
-                ], style={'display': 'flex', 'flexDirection': 'column', 'minHeight': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box'})
+                        """, mathjax=True)
+                    ], style=dict(explanation_box_style, **{
+                        'width': '300px',            
+                        'minWidth': '300px', 
+                        'margin': '15px',            # Cria espaço em volta da caixa
+                        'boxSizing': 'border-box',
+                        'display': 'flex',
+                        'flexDirection': 'column',
+                        'justifyContent': 'flex-start',
+                        'height': 'auto'             # Deixa o Stretch fazer a magia!
+                    }))
+                    
+                ], style={'display': 'flex', 'flexDirection': 'row', 'alignItems': 'stretch', 'minHeight': 'calc(100vh - 164px)', 'backgroundColor': '#000'}) 
+                
             ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
                selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #2ecc71', 'borderBottom': 'none', 'padding': '10px'})
 

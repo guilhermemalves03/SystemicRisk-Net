@@ -41,7 +41,7 @@ def register_callbacks(app, engine):
     @app.callback(
         [Output('volatility-modal', 'style'), 
          Output('volatility-graph', 'figure'),
-         Output('contagion-map', 'clickData')], # <--- 1. NOVO OUTPUT: Controla a memória do clique
+         Output('contagion-map', 'clickData')], 
         [Input('contagion-map', 'clickData'), 
          Input('close-modal-btn', 'n_clicks')],
         [State('volatility-modal', 'style'), 
@@ -50,15 +50,9 @@ def register_callbacks(app, engine):
     )
     def toggle_modal(clickData, close_clicks, modal_style, selected_date, main_ticker):
         ctx = callback_context
-        # Como temos 3 Outputs, temos de devolver 3 'no_update'
         if not ctx.triggered: return no_update, no_update, no_update 
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
         
-        # ==========================================
-        # 2. A MAGIA ACONTECE AQUI
-        # Quando fechamos a janela, mandamos 'None' para o clickData do mapa.
-        # Isto faz o mapa "esquecer" qual foi o último país clicado!
-        # ==========================================
         if trigger_id == 'close-modal-btn':
             modal_style['display'] = 'none'
             return modal_style, go.Figure(), None 
@@ -67,56 +61,55 @@ def register_callbacks(app, engine):
             try:
                 ticker = clickData['points'][0]['customdata']
                 if isinstance(ticker, list): ticker = ticker[0]
-            except KeyError: return no_update, no_update, no_update # 3 items
+            except KeyError: return no_update, no_update, no_update
                 
-            # 1. DADOS DO PAÍS
             vol_data_country = engine.get_realized_volatility(ticker)
-            if vol_data_country is None: return no_update, no_update, no_update # 3 items
+            if vol_data_country is None: return no_update, no_update, no_update
             
-            # 2. DADOS DA EMPRESA 
             vol_data_main = engine.get_realized_volatility(main_ticker)
             
             # ==========================================
-            # DESENHAR O GRÁFICO
+            # 3. APENAS O NOME DO PAÍS
             # ==========================================
+            try:
+                row_c = engine.assets_df[engine.assets_df['ticker'] == ticker].iloc[0]
+                nome_clicado = row_c['country'] # <--- AGORA MOSTRA APENAS "Turkey"
+            except:
+                nome_clicado = ticker 
+                
+            try:
+                row_m = engine.assets_df[engine.assets_df['ticker'] == main_ticker].iloc[0]
+                nome_principal = row_m['name']
+            except:
+                nome_principal = main_ticker
+
             fig = go.Figure()
             
-            # Traço 1: A Empresa Principal (Linha de Base Tracejada)
             if vol_data_main is not None:
                 fig.add_trace(go.Scatter(
                     x=vol_data_main.index, 
                     y=vol_data_main.values, 
                     mode='lines', 
-                    name=main_ticker,
+                    name=nome_principal,
                     line=dict(color='#3498db', width=2, dash='dot'), 
                     opacity=0.7
                 ))
 
-            # Traço 2: O País Clicado (Linha Contínua)
             fig.add_trace(go.Scatter(
                 x=vol_data_country.index, 
                 y=vol_data_country.values, 
                 mode='lines', 
-                name=ticker,
+                name=nome_clicado,
                 line=dict(color='#e74c3c', width=2) 
             ))
             
-            # ==========================================
-            # EVENTO DE STRESS (A Linha Verde Vertical)
-            # ==========================================
             if selected_date:
                 fig.add_vline(x=selected_date, line_dash="dash", line_color="#39FF14")
                 fig.add_annotation(x=selected_date, y=0.95, yref="paper", text="Stress Event", 
                                    showarrow=False, xanchor="left", font=dict(color="#39FF14", size=14))
 
-            # ==========================================
-            # TÍTULO LIMPO
-            # ==========================================
-            clean_title = f"Volatility: {ticker} vs {main_ticker}"
+            clean_title = f"Volatility: {nome_clicado} vs {nome_principal}"
 
-            # ==========================================
-            # LAYOUT, HOVER ESCURO E LINHAS LIMPAS
-            # ==========================================
             fig.update_layout(
                 title=clean_title, 
                 template="plotly_dark", 
@@ -132,7 +125,6 @@ def register_callbacks(app, engine):
                     bordercolor="rgba(255, 255, 255, 0.1)" 
                 ),
                 
-                # O Truque de remover o fundo branco da grelha
                 xaxis=dict(
                     showgrid=False,        
                     zeroline=False,        
@@ -147,13 +139,22 @@ def register_callbacks(app, engine):
                     showgrid=False,        
                     zeroline=False
                 ),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                
+                # ==========================================
+                # LEGENDA VERTICAL NO CANTO SUPERIOR ESQUERDO
+                # ==========================================
+                legend=dict(
+                    orientation="v",           
+                    yanchor="top",             
+                    y=0.98,                    # Posição Y perto do topo
+                    xanchor="right",           # <--- Alinha pela direita
+                    x=0.98,                    # <--- Posição X encostada à direita
+                    bgcolor="rgba(0,0,0,0.5)"  
+                )
             )
             
             modal_style['display'] = 'block'
             
-            # Aqui no final usamos 'no_update' no 3º argumento para não apagar a memória 
-            # antes do tempo (só apaga quando fecha!)
             return modal_style, fig, no_update
             
         return no_update, no_update, no_update 
@@ -200,11 +201,10 @@ def register_callbacks(app, engine):
          Output('distribution-graph', 'figure'), 
          Output('ridgeline-graph', 'figure'),
          Output('extreme-dates-list', 'children'), 
-         Output('extreme-dates-list-map', 'children'),
          Output('mc-paths-store', 'data'), 
          Output('mc-es-store', 'data'), 
          Output('animation-interval', 'disabled'), 
-         Output('animation-frame', 'data')
+         Output('animation-frame', 'data'),
         ],
         [Input('main-asset-dropdown', 'value')]
     )
@@ -247,14 +247,11 @@ def register_callbacks(app, engine):
         
         fig_ridge.update_layout(title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", xaxis_title=r"$\Delta \ln(P_t)$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=20, t=30, b=40), violingap=0, violingroupgap=0, violinmode='overlay')
 
+        # Mantemos apenas a lista estática (não clicável) para outras abas que a usem
         list_items = [html.Div([
-            html.Span(d.strftime('%Y-%m-%d'), style={'color': '#eee'}), # <-- ADICIONADO: 'color': '#eee'
+            html.Span(d.strftime('%Y-%m-%d'), style={'color': '#eee'}), 
             html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#e74c3c'})
         ], style={'padding':'4px 0','borderBottom':'1px solid #111'}) for d in extreme_days.sort_index(ascending=False).index]
-        list_items_clickable = [html.Button([
-            html.Span(d.strftime('%Y-%m-%d'), style={'fontWeight': 'bold', 'color': '#eee'}), # <-- ADICIONADO: 'color': '#eee' AQUI
-            html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#ff6b6b'})
-        ], id={'type': 'stress-date-btn', 'date': d.strftime('%Y-%m-%d')}, style={'width': '100%', 'backgroundColor': '#1e1e1e', 'border': '1px solid #444', 'borderRadius': '5px', 'color': '#eee', 'textAlign': 'left', 'cursor': 'pointer', 'padding': '8px 10px', 'marginBottom': '6px', 'fontFamily': 'inherit', 'fontSize': '14px'}) for d in extreme_days.sort_index(ascending=False).index]
 
         main_paths, sim_es = engine.run_monte_carlo(n_sims=80)
 
@@ -279,15 +276,12 @@ def register_callbacks(app, engine):
         fig_dist_intro.add_annotation(x=i_var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {i_var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
         fig_dist_intro.update_layout(title=rf"$\text{{Aggregated Return Distribution: AAPL}}$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$")
         
-
         intro_paths, _ = engine.run_monte_carlo(n_sims=80)
 
-        # ========================================================
-        # RETORNO FINAL (Pela ordem exata dos Outputs)
-        # ========================================================
         return (
-            fig_dist_intro, intro_paths.tolist(),  # Os 2 da História
-            fig_dist_main, fig_ridge, list_items, list_items_clickable, main_paths.tolist(), sim_es, False, 0  # Os 8 da Dashboard
+            fig_dist_intro, intro_paths.tolist(),  
+            fig_dist_main, fig_ridge, list_items, main_paths.tolist(), sim_es, False, 0
+        
         )
     
     @app.callback(
@@ -488,10 +482,77 @@ def register_callbacks(app, engine):
         # 6. RETORNO CORRIGIDO (impact_table em vez de table_div)
         return fig_map, impact_table, btn_text
 
+    # 1. Função que GERA OS BOTÕES do Mapa e pinta de roxo
+    @app.callback(
+        Output('extreme-dates-list-map', 'children'),
+        [Input('main-asset-dropdown', 'value'),
+         Input('selected-map-date', 'data')]
+    )
+    def update_map_dates_list(main_ticker, selected_date):
+        engine.set_main_asset(main_ticker)
+        extreme_days, _, _ = engine.get_extreme_events(months=12)
+        
+        if extreme_days.empty:
+            return []
+            
+        if not selected_date:
+            selected_date = extreme_days.sort_index(ascending=False).index[0].strftime('%Y-%m-%d')
+            
+        buttons = []
+        for d in extreme_days.sort_index(ascending=False).index:
+            date_str = d.strftime('%Y-%m-%d')
+            
+            # Lógica das Cores
+            is_selected = (date_str == selected_date)
+            bg_color = '#e74c3c' if is_selected else '#1e1e1e'
+            border_color = '#e74c3c' if is_selected else '#444'
+            
+            btn = html.Button([
+                html.Span(date_str, style={'fontWeight': 'bold', 'color': '#fff'}), 
+                html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color': '#fff' if is_selected else '#ff6b6b'})
+            ], 
+            id={'type': 'map-date-btn', 'date': date_str}, # <-- ID específico para o mapa
+            style={
+                'width': '100%', 'backgroundColor': bg_color, 'border': f'1px solid {border_color}', 
+                'borderRadius': '5px', 'textAlign': 'left', 'cursor': 'pointer', 
+                'padding': '8px 10px', 'marginBottom': '6px', 'fontFamily': 'inherit', 'fontSize': '14px',
+                'transition': 'background-color 0.3s'
+            })
+            buttons.append(btn)
+            
+        return buttons
+
+    # 2. Função que ESCUTA O CLIQUE do Mapa (Agora com Reset automático)
+    @app.callback(
+        Output('selected-map-date', 'data'),
+        [Input({'type': 'map-date-btn', 'date': ALL}, 'n_clicks'),
+         Input('main-asset-dropdown', 'value')], # <-- LÊ AGORA A MUDANÇA DE EMPRESA!
+        prevent_initial_call=True
+    )
+    def handle_map_date_click(n_clicks_list, main_ticker):
+        ctx = callback_context
+        if not ctx.triggered:
+            return no_update
+            
+        prop_id = ctx.triggered[0]['prop_id']
+        
+        # O SEGREDO: Se o que disparou a função foi mudar a empresa, apaga a data!
+        if 'main-asset-dropdown' in prop_id:
+            return None
+            
+        # Se foi mesmo um clique num botão de data
+        if "{" in prop_id:
+            btn_id_dict = json.loads(prop_id.split('.')[0])
+            return btn_id_dict['date']
+            
+        return no_update
+
     @app.callback(
         [Output('contagion-map', 'figure'), Output('safe-havens-list', 'children')],
-        [Input('selected-stress-date', 'data'), Input('map-vis-type', 'value'), 
-         Input('calm-period-selector', 'value'), Input('main-asset-dropdown', 'value')]
+        [Input('selected-map-date', 'data'), 
+         Input('map-vis-type', 'value'), 
+         Input('calm-period-selector', 'value'), 
+         Input('main-asset-dropdown', 'value')]
     )
     def render_map(selected_date, vis_type, calm_period, main_ticker):
         engine.set_main_asset(main_ticker)
@@ -532,16 +593,47 @@ def register_callbacks(app, engine):
             t = np.linspace(0, 2*np.pi, 50)
             cx, cy = new_x[i] + radii[i] * np.cos(t), new_y[i] + radii[i] * np.sin(t)
             fig_map.add_trace(go.Scatter(x=cx, y=cy, fill='toself', fillcolor=colors[i], line=dict(color=colors[i], width=1.5), mode='lines', name=map_rows[i]['Country'], text=f"<b>{map_rows[i]['Country']}</b><br>Metric: {c_vals[i]:.2f}<br>Δ Volume: {v_vals[i]:.2%}", customdata=[map_rows[i]['Ticker']] * len(cx), hoverinfo='text', showlegend=False))
-            fig_map.add_trace(go.Scatter(x=[new_x[i]], y=[new_y[i]], mode='text', text=[map_rows[i]['Ticker']], textfont=dict(color='black', size=11, family="sans-serif"), hoverinfo='skip', showlegend=False))
+            fig_map.add_trace(go.Scatter(
+                x=[new_x[i]], 
+                y=[new_y[i]], 
+                mode='text', 
+                text=[map_rows[i]['Ticker']], 
+                customdata=[map_rows[i]['Ticker']], # <--- A SOLUÇÃO ESTÁ AQUI
+                textfont=dict(color='white', size=11, family="sans-serif"), 
+                hoverinfo='skip', 
+                showlegend=False
+            ))
 
-        fig_map.add_trace(go.Scatter(x=[None], y=[None], mode='markers', marker=dict(colorscale='RdBu_r', cmin=-1, cmax=1, showscale=True, colorbar=dict(title="ρ", thickness=15, orientation="h", yanchor="bottom",y=0,xanchor="center",x=0.5,len=0.6 )), hoverinfo='none', showlegend=False))
-        fig_map.update_layout(title=rf"$\text{{Systemic Risk Cartogram - }} {target_date}$", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=120, b=0))
+        # Traço invisível apenas para mostrar a barra de cores
+        fig_map.add_trace(go.Scatter(
+            x=[None], y=[None], 
+            mode='markers', 
+            marker=dict(
+                colorscale='RdBu_r', 
+                cmin=-1, 
+                cmax=1, 
+                showscale=True, 
+                colorbar=dict(
+                    title=dict(text="ρ scale", side="top"), # <--- O SEGREDO ESTÁ AQUI (move para o topo da barra)
+                    thickness=15,
+                    orientation="h",                  # Garante que é horizontal
+                    y=-0.1,                           # Empurra a barra ligeiramente para baixo (opcional, ajusta se precisares)
+                    yanchor="top",
+                    len=0.6
+                )
+            ), 
+            hoverinfo='none', 
+            showlegend=False
+        ))
+        
+        # --- CORREÇÃO AQUI: Margens ajustadas (b=80, t=60) para a barra de cor ter espaço e não ficar cortada ---
+        fig_map.update_layout(title=rf"$\text{{Systemic Risk Cartogram - }} {target_date}$", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=60, b=80))
 
         safe_havens = sorted([row for row in map_rows if row['Delta'] < 0 and row['Stress'] <= 0], key=lambda x: x['Stress'])
         
         safe_list_items = [
             html.Div([
-                html.Span(sh['Country'], style={'color': '#eee'}), # <--- A cor do país entra aqui!
+                html.Span(sh['Country'], style={'color': '#eee'}), 
                 html.Span("{:.2f}".format(sh['Delta']), style={'float':'right','color':'#2ecc71'})
             ], style={'padding':'6px 0','borderBottom':'1px solid #222'}) 
             for sh in safe_havens
@@ -550,6 +642,7 @@ def register_callbacks(app, engine):
         if not safe_list_items: 
             safe_list_items = [html.Div("No safe havens.", style={'color': '#777'})]
         return fig_map, safe_list_items
+    
 
     @app.callback(
         [Output('monte-carlo-graph', 'figure'), Output('animation-frame', 'data', allow_duplicate=True),
@@ -566,7 +659,7 @@ def register_callbacks(app, engine):
         paths = np.array(paths)
         
         # Se o frame já chegou ao fim (30 dias), paramos a animação e não fazemos nada
-        if frame >= 30:
+        if frame > 30:
             return no_update, frame, True, no_update, no_update, no_update
 
         # 2. VETORIZAÇÃO: Em vez de loops, calculamos as bandas de risco para a matriz inteira de uma vez!
@@ -597,7 +690,7 @@ def register_callbacks(app, engine):
         y_min, y_max = np.min(paths) * 0.95, np.max(paths) * 1.05
 
         # Se for o último frame (Dia 30)
-        if frame == 29: 
+        if frame == 30: 
             final_es_ret = lower_bound[-1] - 1
             fig_mc.add_hline(y=lower_bound[-1], line_dash="dash", line_color="#FF0000", annotation_text=rf"$ES_{{1\%}} = {final_es_ret*100:.2f}\%$", annotation_position="bottom left", annotation_font=dict(color="#FF0000", size=16))
             fig_mc.update_layout(title=r"$\text{Simulated Paths: } S_t = S_0 \exp\left(\sum r_i\right)$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=40), xaxis=dict(range=[0, 30]), yaxis=dict(range=[y_min, y_max]))
@@ -680,25 +773,6 @@ def register_callbacks(app, engine):
         str_min = rf"$\text{{Worst: }} {min_val*100:+.2f}\%$"
 
         return fig, btn_text, str_max, str_mean, str_min    
-
-    @app.callback(
-        [Output('main-asset-dropdown', 'value'),
-         Output('network-graph', 'clickData')], # <-- Limpa a memória do clique
-        [Input('network-graph', 'clickData')],
-        prevent_initial_call=True
-    )
-    def apply_domino_effect(click_data):
-        if not click_data:
-            return no_update, no_update
-            
-        point = click_data['points'][0]
-        
-        if 'customdata' in point:
-            clicked_ticker = point['customdata']
-            # Devolve o novo ticker para o Dropdown, e 'None' para apagar a memória do clique
-            return clicked_ticker, None 
-            
-        return no_update, no_update
 
     @app.callback(
         [Output('intro-network-graph', 'figure'),
@@ -815,12 +889,101 @@ def register_callbacks(app, engine):
 
         btn_text = "SHOW FULL NETWORK" if show_safe else "HIGHLIGHT SAFE HAVENS"
         return fig, btn_text
+    
+    # 1. Função que GERA OS BOTÕES e pinta o selecionado de ROXO
+    @app.callback(
+        Output('extreme-dates-list-network', 'children'),
+        [Input('main-asset-dropdown', 'value'),
+         Input('selected-network-date', 'data')]
+    )
+    def update_network_dates_list(main_ticker, selected_date):
+        engine.set_main_asset(main_ticker)
+        extreme_days, _, _ = engine.get_extreme_events(months=12)
+        
+        if extreme_days.empty:
+            return []
+            
+        # Se nenhuma data estiver selecionada ainda, assume a mais recente
+        if not selected_date:
+            selected_date = extreme_days.sort_index(ascending=False).index[0].strftime('%Y-%m-%d')
+            
+        buttons = []
+        for d in extreme_days.sort_index(ascending=False).index:
+            date_str = d.strftime('%Y-%m-%d')
+            
+            # Lógica das Cores: Verifica se este botão é o que está selecionado
+            is_selected = (date_str == selected_date)
+            bg_color = '#e74c3c' if is_selected else '#1e1e1e'     # Roxo ou Cinza Escuro
+            border_color = '#e74c3c' if is_selected else '#444'    # Borda Roxa Clara ou Cinza
+            
+            btn = html.Button([
+                html.Span(date_str, style={'fontWeight': 'bold', 'color': '#fff'}), 
+                html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color': '#fff' if is_selected else '#ff6b6b'})
+            ], 
+            id={'type': 'network-date-btn', 'date': date_str}, 
+            style={
+                'width': '100%', 'backgroundColor': bg_color, 'border': f'1px solid {border_color}', 
+                'borderRadius': '5px', 'textAlign': 'left', 'cursor': 'pointer', 
+                'padding': '8px 10px', 'marginBottom': '6px', 'fontFamily': 'inherit', 'fontSize': '14px',
+                'transition': 'background-color 0.3s' # Animação suave na mudança de cor
+            })
+            buttons.append(btn)
+            
+        return buttons
+
+    @app.callback(
+        [Output('main-asset-dropdown', 'value'),
+         Output('network-graph', 'clickData')], # <-- Limpa a memória do clique
+        [Input('network-graph', 'clickData')],
+        prevent_initial_call=True
+    )
+    def apply_domino_effect(click_data):
+        if not click_data:
+            return no_update, no_update
+            
+        point = click_data['points'][0]
+        
+        if 'customdata' in point:
+            clicked_ticker = point['customdata']
+            # Devolve o novo ticker para o Dropdown, e 'None' para apagar a memória do clique
+            return clicked_ticker, None 
+            
+        return no_update, no_update
+        
+    @app.callback(
+        Output('selected-network-date', 'data'),
+        [Input({'type': 'network-date-btn', 'date': ALL}, 'n_clicks'),
+         Input('main-asset-dropdown', 'value')],
+        prevent_initial_call=True
+    )
+    def handle_network_date_click(n_clicks_list, main_ticker):
+        from dash import callback_context # Garantir que está importado
+        import json
+
+        ctx = callback_context
+        if not ctx.triggered:
+            return no_update
+            
+        prop_id = ctx.triggered[0]['prop_id']
+        
+        # Se mudar a empresa, apaga a data selecionada para forçar a mais recente
+        if 'main-asset-dropdown' in prop_id:
+            return None
+            
+        # Se clicar no botão da data, extrai e devolve essa data
+        if "{" in prop_id:
+            btn_id_dict = json.loads(prop_id.split('.')[0])
+            return btn_id_dict['date']
+            
+        return no_update
         
     @app.callback(
         Output('network-graph', 'figure'),
-        [Input('selected-stress-date', 'data'), Input('main-asset-dropdown', 'value')]
+        [Input('selected-network-date', 'data'), 
+         Input('main-asset-dropdown', 'value'),
+         Input('node-click-memory', 'data')] 
     )
-    def render_network(selected_date, main_ticker):
+    def render_network(selected_date, main_ticker, clicked_node): # <--- 2. RECEBE A VARIÁVEL
         engine.set_main_asset(main_ticker)
         
         try:
@@ -829,28 +992,29 @@ def register_callbacks(app, engine):
             main_name = main_ticker
             
         extreme_days, _, _ = engine.get_extreme_events(months=12)
+        
         target_date = selected_date if selected_date else (extreme_days.index[-1].strftime('%Y-%m-%d') if not extreme_days.empty else None)
         
         if not target_date:
             return go.Figure()
 
-        # Pedimos o top 5 (em vez de 4) para garantir que temos substitutos suficientes caso a empresa central seja removida
         top_pos, top_neg = engine.get_network_data(target_date, top_n=5)
         
-        # O FILTRO MÁGICO: Remove a empresa central das listas (se ela lá estiver) e garante que só mostramos 4
         top_pos = [node for node in top_pos if node['ticker'] != main_ticker][:4]
         top_neg = [node for node in top_neg if node['ticker'] != main_ticker][:4]
 
         if not top_pos:
-            return go.Figure() # (Na função do intro pode ser: return fig, "HIGHLIGHT SAFE HAVENS")
+            return go.Figure() 
 
         fig = go.Figure()
-
-        # SUBSTITUI O TEU def add_nodes_edges E O NÓ CENTRAL POR ISTO:
 
         def add_nodes_edges(nodes, angles, color, is_top):
             x_nodes, y_nodes, hover_texts = [], [], []
             custom_data = [] 
+            
+            # Listas separadas para as cores das bordas e larguras
+            border_colors = []
+            border_widths = []
             
             for i, node in enumerate(nodes):
                 delta_val = node.get('delta', node['rho'])
@@ -864,23 +1028,23 @@ def register_callbacks(app, engine):
                 hover_texts.append(f"Ticker: {node['ticker']}<br>Força (ρ): {node['rho']:.2f}<br>Salto (Δρ): {delta_val:.2f}")
                 custom_data.append(node['ticker']) 
                 
+                # --- 3. LÓGICA DO PRIMEIRO CLIQUE (DESTAQUE VISUAL) ---
+                is_clicked = (node['ticker'] == clicked_node)
+                border_colors.append('#f1c40f' if is_clicked else color) # Fica com contorno amarelo se clicado
+                border_widths.append(4 if is_clicked else 2)             # Fica com contorno mais grosso se clicado
+                
                 # Desenhar a Linha
                 fig.add_trace(go.Scatter(x=[0, x], y=[0, y], mode='lines', 
                                          line=dict(width=edge_width, color=color), 
                                          opacity=0.4, hoverinfo='none', showlegend=False))
                 
-                # --- O TRUQUE MILIMÉTRICO DAS ANOTAÇÕES ---
                 raw_name = node['name']
-                # Mantemos a quebra de linha para ficar compacto
                 wrapped_name = "<br>".join(textwrap.wrap(raw_name, width=13)) 
                 
-                # Em vez de atirar para os cantos, empurramos apenas alguns PIXELS:
-                # Podes aumentar ou diminuir o número 18 ao teu gosto!
-                if x > 0.15: shift_x = 18       # Empurra 18 pixels para a direita
-                elif x < -0.15: shift_x = -18   # Empurra 18 pixels para a esquerda
+                if x > 0.15: shift_x = 18       
+                elif x < -0.15: shift_x = -18   
                 else: shift_x = 0
                 
-                # Empurra para cima (se for topo) ou para baixo (se for fundo) para não tapar a bola
                 shift_y = 26 if is_top else -26 
                 
                 fig.add_annotation(
@@ -893,10 +1057,11 @@ def register_callbacks(app, engine):
                     align="center"
                 )
             
-            # Desenhar as Bolas (Agora APENAS 'markers', o texto é tratado na anotação)
+            # Desenhar as Bolas (agora usando as listas de bordas dinâmicas)
             fig.add_trace(go.Scatter(x=x_nodes, y=y_nodes, mode='markers', 
                                      customdata=custom_data, 
-                                     marker=dict(size=25, color=color, line=dict(width=2, color=color)),
+                                     marker=dict(size=25, color=color, 
+                                                 line=dict(width=border_widths, color=border_colors)), # <-- Atualizado aqui
                                      hovertext=hover_texts, hoverinfo='text', showlegend=False,
                                      cliponaxis=False))
 
@@ -906,25 +1071,12 @@ def register_callbacks(app, engine):
         neg_angles = np.linspace(7*np.pi/6, 11*np.pi/6, len(top_neg))
         add_nodes_edges(top_neg, neg_angles, '#2ecc71', is_top=False)
 
-        # 4. ADICIONAR O CUSTOMDATA TAMBÉM AO NÓ CENTRAL (Para que também seja clicável)
+        # NÓ CENTRAL AZUL COM TEXTO BRANCO E CUSTOMDATA
         fig.add_trace(go.Scatter(x=[0], y=[0], mode='markers+text', text=[f"<b>{main_name}</b>"], 
-                                 customdata=[main_ticker], # <--- INJETADO AQUI
+                                 customdata=[main_ticker], 
                                  textposition="middle center", 
                                  textfont=dict(color='#ffffff', size=12), 
                                  marker=dict(size=65, color='#3498db', line=dict(width=3, color='#3498db')), 
-                                 hoverinfo='text', name='Center', showlegend=False, cliponaxis=False))
-
-        pos_angles = np.linspace(np.pi/6, 5*np.pi/6, len(top_pos))
-        add_nodes_edges(top_pos, pos_angles, '#e74c3c', is_top=True)
-
-        neg_angles = np.linspace(7*np.pi/6, 11*np.pi/6, len(top_neg))
-        add_nodes_edges(top_neg, neg_angles, '#2ecc71', is_top=False)
-
-        # 3. NÓ CENTRAL AZUL COM TEXTO BRANCO
-        fig.add_trace(go.Scatter(x=[0], y=[0], mode='markers+text', text=[f"<b>{main_name}</b>"], 
-                                 textposition="middle center", 
-                                 textfont=dict(color='#ffffff', size=12), # <-- Texto a Branco
-                                 marker=dict(size=65, color='#3498db', line=dict(width=2, color='#3498db')), # <-- Bola Azul
                                  hoverinfo='text', name='Center', showlegend=False, cliponaxis=False))
 
         fig.update_layout(title=f"Contagion Network - {target_date}",
