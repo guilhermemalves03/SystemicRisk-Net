@@ -7,6 +7,7 @@ import json
 from plotly.colors import sample_colorscale
 from layout import COUNTRY_COORDS
 import textwrap
+import copy
 
 LATEX_FONT = dict(family="EB Garamond, serif", size=16)
 
@@ -229,7 +230,12 @@ def register_callbacks(app, engine):
         
         fig_dist_main.add_vline(x=var_limit, line_dash="dash", line_color="#e74c3c")
         fig_dist_main.add_annotation(x=var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
-        fig_dist_main.update_layout(title=rf"$\text{{Aggregated Return Distribution: }} \text{{{selected_ticker}}}$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$")
+        fig_dist_main.update_layout(
+            title=rf"$\text{{Aggregated Return Distribution: }} \text{{{selected_ticker}}}$", font=LATEX_FONT, 
+            template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
+            margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$",
+            xaxis=dict(tickformat='.0%') # <--- FORMATO EM PERCENTAGEM AQUI
+        )
 
         fig_ridge = go.Figure()
         df_returns = pd.DataFrame({'return': filtered_returns})
@@ -245,7 +251,12 @@ def register_callbacks(app, engine):
                 fig_ridge.add_trace(go.Violin(x=month_data, y=[month_label] * len(month_data), name=month_label, line_color='white', line_width=1, fillcolor=colors[i], opacity=0.9, side='positive', width=3.5, orientation='h', points=False, showlegend=False, hoverinfo='skip'))
                 fig_ridge.add_annotation(x=m_ret, y=month_label, text=f"μ: {m_ret*100:.2f}%", showarrow=False, yshift=18, bgcolor="rgba(0,0,0,0.7)", bordercolor=colors[i], font=dict(color="white", size=11, family="sans-serif"))
         
-        fig_ridge.update_layout(title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", xaxis_title=r"$\Delta \ln(P_t)$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=20, t=30, b=40), violingap=0, violingroupgap=0, violinmode='overlay')
+        fig_ridge.update_layout(
+            title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", xaxis_title=r"$\Delta \ln(P_t)$", font=LATEX_FONT, 
+            template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
+            margin=dict(l=10, r=20, t=30, b=40), violingap=0, violingroupgap=0, violinmode='overlay',
+            xaxis=dict(tickformat='.0%') # <--- FORMATO EM PERCENTAGEM AQUI
+        )
 
         # Mantemos apenas a lista estática (não clicável) para outras abas que a usem
         list_items = [html.Div([
@@ -274,7 +285,25 @@ def register_callbacks(app, engine):
         
         fig_dist_intro.add_vline(x=i_var_limit, line_dash="dash", line_color="#e74c3c")
         fig_dist_intro.add_annotation(x=i_var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {i_var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
-        fig_dist_intro.update_layout(title=rf"$\text{{Aggregated Return Distribution: AAPL}}$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$")
+        # Definimos os limites do gráfico INICIALMENTE para que nunca mais mudem
+        orig_min = i_filtered_returns.min()
+        orig_max = i_filtered_returns.max()
+        pad = (orig_max - orig_min) * 0.05
+        
+        fig_dist_intro.update_layout(
+            title=rf"$\text{{Aggregated Return Distribution: AAPL}}$", font=LATEX_FONT, 
+            template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
+            margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$",
+            xaxis=dict(
+                tickformat='.0%',
+                range=[orig_min - pad, orig_max + pad], # <-- Limites FIXOS
+                autorange=False # <-- Não deixamos o Plotly mexer
+            ),
+            yaxis=dict(
+                range=[0, 65], # <-- Limites FIXOS
+                autorange=False
+            )
+        )
         
         intro_paths, _ = engine.run_monte_carlo(n_sims=80)
 
@@ -308,54 +337,102 @@ def register_callbacks(app, engine):
             # Esconde o Distribution, mostra o Ridgeline
             return estilo_escondido, estilo_visivel, texto_botao
         
+
     @app.callback(
         [Output('intro-apple-dist', 'figure', allow_duplicate=True),
-         Output('zoom-btn-intro', 'children')], # <-- NOVO: Controlar o texto do botão
-        [Input('zoom-btn-intro', 'n_clicks')],
+         Output('zoom-btn-intro', 'children', allow_duplicate=True)],
+        [Input('zoom-btn-intro', 'n_clicks'),
+         Input('focus-example-btn', 'n_clicks')],
         [State('intro-apple-dist', 'figure')],
         prevent_initial_call=True
     )
-    def toggle_intro_zoom(n_clicks, fig):
+    def toggle_intro_graph_interactions(n_clicks_zoom, n_clicks_focus, fig):
         if fig is None: return no_update, no_update
         
-        patched_fig = go.Figure(fig)
-        patched_fig.update_layout(transition=dict(duration=500, easing="cubic-in-out"))
+        ctx = callback_context
+        if not ctx.triggered:
+            return no_update, no_update
+            
+        trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
         
-        if n_clicks % 2 == 1:
-            # --- ESTADO: ZOOM IN ---
-            x_min, x_max = -0.065, -0.015  # <-- CORRIGIDO: Corta o espaço vazio à esquerda
-            max_y = 0
+        import copy
+        import numpy as np
+        new_fig = copy.deepcopy(fig)
+        
+        # 1. ATIVAR A ANIMAÇÃO SUAVE NOVAMENTE!
+        if 'layout' not in new_fig: new_fig['layout'] = {}
+        new_fig['layout']['transition'] = dict(duration=600, easing="cubic-in-out")
+        
+        btn_text = no_update
+        
+        # Limites exatos (o gráfico já foi gerado trancado no setup_analysis com estes valores)
+        engine.set_main_asset('AAPL')
+        _, _, i_filtered_returns = engine.get_extreme_events(months=12)
+        pad = (i_filtered_returns.max() - i_filtered_returns.min()) * 0.05
+        REAL_X_MIN = i_filtered_returns.min() - pad
+        REAL_X_MAX = i_filtered_returns.max() + pad
+        GLOBAL_Y_MAX = 65 
+        
+        ZOOM_X_MIN, ZOOM_X_MAX = -0.065, -0.015
+        ZOOM_Y_MAX = 15 
+        
+        n_clicks_zoom = n_clicks_zoom or 0
+        is_zoomed = (n_clicks_zoom % 2 == 1)
+        
+        # =========================================================
+        # BOTÃO VERMELHO (ZOOM)
+        # =========================================================
+        if trigger_id == 'zoom-btn-intro':
+            if is_zoomed:
+                new_fig['layout']['xaxis']['range'] = [ZOOM_X_MIN, ZOOM_X_MAX]
+                new_fig['layout']['yaxis']['range'] = [0, ZOOM_Y_MAX]
+                new_fig['layout']['title'] = {'text': r"$\text{Left Tail Focus (Extreme Losses)}$"}
+                btn_text = "WHOLE DISTRIBUTION"
+            else:
+                new_fig['layout']['xaxis']['range'] = [REAL_X_MIN, REAL_X_MAX]
+                new_fig['layout']['yaxis']['range'] = [0, GLOBAL_Y_MAX]
+                new_fig['layout']['title'] = {'text': r"$\text{Aggregated Return Distribution: AAPL}$"}
+                btn_text = "ZOOM: LEFT TAIL"
+                
+        # =========================================================
+        # BOTÃO VERDE (CASE STUDY)
+        # =========================================================
+        elif trigger_id == 'focus-example-btn':
+            n_clicks_focus = n_clicks_focus or 0
+            show_highlight = (n_clicks_focus % 2 == 1)
             
-            for trace in patched_fig.data:
-                if trace.x is not None and trace.y is not None:
-                    try:
-                        x_vals = np.array(trace.x, dtype=float)
-                        y_vals = np.array(trace.y, dtype=float)
-                        mask = (x_vals >= x_min) & (x_vals <= x_max)
-                        
-                        if np.any(mask):
-                            local_max = np.max(y_vals[mask])
-                            if local_max > max_y:
-                                max_y = local_max
-                    except (ValueError, TypeError):
-                        continue
-                            
-            if max_y == 0: max_y = 5 
+            new_fig['data'] = [t for t in new_fig.get('data', []) if t.get('name') != 'Case Study']
             
-            patched_fig.update_xaxes(autorange=False, range=[x_min, x_max])
-            patched_fig.update_yaxes(autorange=False, range=[0, max_y * 1.1])
-            patched_fig.update_layout(title_text=r"$\text{Left Tail Focus (Extreme Losses)}$")
-            
-            btn_text = "WHOLE DISTRIBUTION" # <-- Muda o texto do botão
-            
-        else:
-            patched_fig.update_xaxes(autorange=True)
-            patched_fig.update_yaxes(autorange=True)
-            patched_fig.update_layout(title_text=r"$\text{Aggregated Return Distribution: AAPL}$")
-            
-            btn_text = "ZOOM: LEFT TAIL" # <-- Volta ao texto original
-            
-        return patched_fig, btn_text
+            if show_highlight:
+                counts, bin_edges = np.histogram(i_filtered_returns, bins=80, density=True)
+                bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
+                
+                target_val = -0.03513  
+                idx = (np.abs(bin_centers - target_val)).argmin()
+                target_x = bin_centers[idx]
+                target_y = counts[idx]
+                
+                bar_width = bin_centers[1] - bin_centers[0]
+                
+                new_fig['data'].append({
+                    'type': 'bar',
+                    'x': [target_x],
+                    'y': [target_y],
+                    'width': [bar_width],
+                    'name': 'Case Study',
+                    'marker': {'color': '#39FF14'}
+                })
+                new_fig['layout']['barmode'] = 'overlay'
+
+            # Respeitar os limites mantendo a animação intacta
+            if is_zoomed:
+                new_fig['layout']['xaxis']['range'] = [ZOOM_X_MIN, ZOOM_X_MAX]
+                new_fig['layout']['yaxis']['range'] = [0, ZOOM_Y_MAX]
+            else:
+                new_fig['layout']['xaxis']['range'] = [REAL_X_MIN, REAL_X_MAX]
+                new_fig['layout']['yaxis']['range'] = [0, GLOBAL_Y_MAX]
+
+        return new_fig, btn_text
     
     @app.callback(
         [Output('intro-contagion-map', 'figure'), 
@@ -454,7 +531,35 @@ def register_callbacks(app, engine):
             uirevision='constant' # Impede os bugs teimosos de redimensionamento do Plotly
         )
         # 5. CONSTRUÇÃO DA TABELA
-        table_header = html.Thead(html.Tr([html.Th("Country"), html.Th("Correlation Jump (Δρ)")]))
+        # O novo cabeçalho visualmente separado
+        # Cabeçalho com linha horizontal mais subida e separador vertical
+        table_header = html.Tr([
+            html.Th("Country", style={
+                'textAlign': 'center', 
+                'color': '#ffffff',             
+                'borderBottom': '2px solid #333333', 
+                'borderRight': '1px solid #333333',  # <-- NOVA LINHA VERTICAL (Lado Direito)
+                'paddingBottom': '4px',              # <-- DIMINUÍDO para subir a linha horizontal
+                'paddingRight': '15px',              # Empurra o texto para não colar à linha vertical
+                'textTransform': 'uppercase',   
+                'fontSize': '0.85em',           
+                'letterSpacing': '1px',
+                'width': '50%',
+                'fontWeight': 'bold'
+            }),
+            html.Th("Correlation Jump (Δρ)", style={
+                'textAlign': 'center', 
+                'color': '#ffffff', 
+                'borderBottom': '2px solid #333333', 
+                'paddingBottom': '4px',              # <-- DIMINUÍDO para subir a linha horizontal
+                'paddingLeft': '15px',               # Afasta o texto da linha vertical
+                'textTransform': 'uppercase',
+                'fontSize': '0.85em',
+                'letterSpacing': '1px',
+                'width': '50%',
+                'fontWeight': 'bold'
+            })
+        ])
         
         rows = []
         for d in sorted(table_data, key=lambda x: x['Jump'], reverse=True):
@@ -462,13 +567,28 @@ def register_callbacks(app, engine):
             intensity = min(abs(d['Jump']) + 0.3, 1.0) 
             
             if d['Jump'] < 0:
-                text_color = f"rgba(52, 152, 219, {intensity})"
+                text_color = f"rgba(52, 152, 219, {intensity})" # Azul
             else:
-                text_color = f"rgba(231, 76, 60, {intensity})"
+                text_color = f"rgba(231, 76, 60, {intensity})"  # Vermelho
             
+            # Nota: Usa d['Country'] ou d['name'] dependendo de como chamaste a chave no teu dicionário table_data
+            nome_pais = d.get('Country', d.get('name', 'N/A')) 
+
             rows.append(html.Tr([
-                html.Td(d['Country']), 
-                html.Td(display_value, style={'color': text_color, 'fontWeight': 'bold'})
+                html.Td(nome_pais, style={
+                    'textAlign': 'center',
+                    'borderRight': '1px solid #333333', 
+                    'padding': '8px 15px 8px 0',        
+                    'fontSize': '1.1em',
+                    'color': '#ffffff'  # Mantém o nome do país a branco para leitura clara
+                }),
+                html.Td(display_value, style={
+                    'textAlign': 'center',
+                    'padding': '8px 0 8px 15px',        
+                    'fontSize': '1.1em',
+                    'color': text_color, # <-- APLICA A COR DINÂMICA AQUI!
+                    'fontWeight': 'bold' # Negrito nos números fica excelente com as cores
+                })
             ]))
 
         table_body = html.Tbody(rows)
@@ -676,7 +796,7 @@ def register_callbacks(app, engine):
         
         str_max = rf"$\text{{Max: }} {max_val*100:+.2f}\%$"
         str_mean = rf"$\text{{Mean: }} {mean_val*100:+.2f}\%$"  
-        str_min = rf"$\text{{Worst: }} {min_val*100:+.2f}\%$"
+        str_min = rf"$\text{{Min: }} {min_val*100:+.2f}\%$"
         
         # 4. Construir a figura MUITO mais leve (sem fillgradient)
         fig_mc = go.Figure()
@@ -770,7 +890,7 @@ def register_callbacks(app, engine):
         # Formatamos em LaTeX para ficar elegante e com cores
         str_max = rf"$\text{{Max: }} {max_val*100:+.2f}\%$"
         str_mean = rf"$\text{{Mean: }} {mean_val*100:+.2f}\%$"  # <-- Tira o \color{#f1c40f}
-        str_min = rf"$\text{{Worst: }} {min_val*100:+.2f}\%$"
+        str_min = rf"$\text{{Min: }} {min_val*100:+.2f}\%$"
 
         return fig, btn_text, str_max, str_mean, str_min    
 
@@ -798,14 +918,33 @@ def register_callbacks(app, engine):
         top_neg = [node for node in top_neg if node['ticker'] != main_ticker][:4]
 
         if not top_pos:
-            return go.Figure()
+            return go.Figure(), no_update
 
         show_safe = n_clicks % 2 == 1
+
+        # =====================================================================
+        # LÓGICA DE NORMALIZAÇÃO DO VOLUME (Tamanhos entre 20px e 55px)
+        # =====================================================================
+        # (O novo código perfeito)
+        all_nodes = top_pos + top_neg
+        vols = [n.get('volume', 0.0) for n in all_nodes] # O Motor já fez o trabalho difícil!
+        min_v, max_v = (min(vols), max(vols)) if vols else (0, 0)
+        
+        def get_size(v):
+            if max_v == min_v or max_v == 0: return 25
+            return 20 + ((v - min_v) / (max_v - min_v)) * 35
+        
+        min_v, max_v = (min(vols), max(vols)) if vols else (0, 0)
+        
+        def get_size(v):
+            if max_v == min_v or max_v == 0: return 25 # Tamanho base de segurança
+            return 20 + ((v - min_v) / (max_v - min_v)) * 35 # Matemática de Escala
 
         # --- Lógica de desenho para o Modo História (COM highlight_mode) ---
         def add_nodes_edges(nodes, angles, color, is_top, highlight_mode):
             x_nodes, y_nodes, hover_texts = [], [], []
             custom_data = [] 
+            node_sizes = [] # <--- NOVA LISTA PARA GUARDAR OS TAMANHOS DE CADA BOLA
             
             for i, node in enumerate(nodes):
                 delta_val = node.get('delta', node['rho'])
@@ -816,7 +955,14 @@ def register_callbacks(app, engine):
                 y_nodes.append(y)
                 
                 edge_width = 1 + (abs(node['rho']) ** 2.5) * 20
-                hover_texts.append(f"Ticker: {node['ticker']}<br>Força (ρ): {node['rho']:.2f}<br>Salto (Δρ): {delta_val:.2f}")
+                
+                # --- CALCULAR O TAMANHO COM BASE NO VOLUME ---
+                vol = node.get('volume', 0.0)
+                node_sizes.append(get_size(vol))
+                
+                # Atualizar o hover para mostrar o volume formatado!
+                vol_text = f"{vol:,.0f}" if vol > 0 else "N/A"
+                hover_texts.append(f"Ticker: {node['ticker']}<br>Força (ρ): {node['rho']:.2f}<br>Salto (Δρ): {delta_val:.2f}<br>Volume: {vol_text}")
                 custom_data.append(node['ticker']) 
                 
                 # --- OPACIDADE DA LINHA ---
@@ -830,11 +976,12 @@ def register_callbacks(app, engine):
                 raw_name = node['name']
                 wrapped_name = "<br>".join(textwrap.wrap(raw_name, width=13)) 
                 
-                if x > 0.15: shift_x = 18       
-                elif x < -0.15: shift_x = -18   
+                # Aumentei as margens (22 e 30) para o texto não ficar colado às bolas gigantes
+                if x > 0.15: shift_x = 22       
+                elif x < -0.15: shift_x = -22   
                 else: shift_x = 0
                 
-                shift_y = 26 if is_top else -26 
+                shift_y = 30 if is_top else -30 
                 
                 # --- OPACIDADE DO TEXTO ---
                 text_opacity = 0.15 if (highlight_mode and is_top) else 1.0
@@ -849,12 +996,12 @@ def register_callbacks(app, engine):
                     align="center"
                 )
             
-            # --- OPACIDADE DAS BOLAS ---
+            # --- DESENHAR BOLAS COM TAMANHOS DINÂMICOS ---
             node_opacity = 0.15 if (highlight_mode and is_top) else 1.0
             
             fig.add_trace(go.Scatter(x=x_nodes, y=y_nodes, mode='markers', 
                                      customdata=custom_data, 
-                                     marker=dict(size=25, color=color, opacity=node_opacity, 
+                                     marker=dict(size=node_sizes, color=color, opacity=node_opacity, 
                                                  line=dict(width=2, color=color)),
                                      hovertext=hover_texts, hoverinfo='text', showlegend=False,
                                      cliponaxis=False))
@@ -866,11 +1013,11 @@ def register_callbacks(app, engine):
         neg_angles = np.linspace(7*np.pi/6, 11*np.pi/6, len(top_neg))
         add_nodes_edges(top_neg, neg_angles, '#2ecc71', is_top=False, highlight_mode=show_safe)
 
-        # 3. NÓ CENTRAL AZUL COM TEXTO BRANCO
+        # 3. NÓ CENTRAL AZUL (Tamanho fixo para não perder a importância)
         fig.add_trace(go.Scatter(x=[0], y=[0], mode='markers+text', text=[f"<b>{main_name}</b>"],
                                  textposition="middle center", 
-                                 textfont=dict(color='#ffffff', size=12), # <-- Texto a Branco
-                                 marker=dict(size=65, color='#3498db', line=dict(width=2, color='#3498db')), # <-- Bola Azul
+                                 textfont=dict(color='#ffffff', size=12), 
+                                 marker=dict(size=65, color='#3498db', line=dict(width=2, color='#3498db')), 
                                  hoverinfo='text', name='Center', showlegend=False, cliponaxis=False))
 
         x_axis = dict(visible=False, range=[-1.9, 1.9], autorange=False)
@@ -913,8 +1060,8 @@ def register_callbacks(app, engine):
             
             # Lógica das Cores: Verifica se este botão é o que está selecionado
             is_selected = (date_str == selected_date)
-            bg_color = '#e74c3c' if is_selected else '#1e1e1e'     # Roxo ou Cinza Escuro
-            border_color = '#e74c3c' if is_selected else '#444'    # Borda Roxa Clara ou Cinza
+            bg_color = '#e74c3c' if is_selected else '#1e1e1e'     # Vermelho ou Cinza Escuro
+            border_color = '#e74c3c' if is_selected else '#444'    # Borda Vermelha ou Cinza
             
             btn = html.Button([
                 html.Span(date_str, style={'fontWeight': 'bold', 'color': '#fff'}), 
@@ -945,7 +1092,6 @@ def register_callbacks(app, engine):
         
         if 'customdata' in point:
             clicked_ticker = point['customdata']
-            # Devolve o novo ticker para o Dropdown, e 'None' para apagar a memória do clique
             return clicked_ticker, None 
             
         return no_update, no_update
@@ -957,7 +1103,7 @@ def register_callbacks(app, engine):
         prevent_initial_call=True
     )
     def handle_network_date_click(n_clicks_list, main_ticker):
-        from dash import callback_context # Garantir que está importado
+        from dash import callback_context 
         import json
 
         ctx = callback_context
@@ -983,7 +1129,7 @@ def register_callbacks(app, engine):
          Input('main-asset-dropdown', 'value'),
          Input('node-click-memory', 'data')] 
     )
-    def render_network(selected_date, main_ticker, clicked_node): # <--- 2. RECEBE A VARIÁVEL
+    def render_network(selected_date, main_ticker, clicked_node): 
         engine.set_main_asset(main_ticker)
         
         try:
@@ -1008,11 +1154,29 @@ def register_callbacks(app, engine):
 
         fig = go.Figure()
 
+        # =====================================================================
+        # LÓGICA DE NORMALIZAÇÃO DO VOLUME PARA O DASHBOARD PRINCIPAL
+        # =====================================================================
+        # (O novo código perfeito)
+        all_nodes = top_pos + top_neg
+        vols = [n.get('volume', 0.0) for n in all_nodes] # O Motor já fez o trabalho difícil!
+        min_v, max_v = (min(vols), max(vols)) if vols else (0, 0)
+        
+        def get_size(v):
+            if max_v == min_v or max_v == 0: return 25
+            return 20 + ((v - min_v) / (max_v - min_v)) * 35
+        
+        min_v, max_v = (min(vols), max(vols)) if vols else (0, 0)
+        
+        def get_size(v):
+            if max_v == min_v or max_v == 0: return 25
+            return 20 + ((v - min_v) / (max_v - min_v)) * 35 
+
         def add_nodes_edges(nodes, angles, color, is_top):
             x_nodes, y_nodes, hover_texts = [], [], []
             custom_data = [] 
             
-            # Listas separadas para as cores das bordas e larguras
+            node_sizes = [] # <--- LISTA DE TAMANHOS
             border_colors = []
             border_widths = []
             
@@ -1025,13 +1189,19 @@ def register_callbacks(app, engine):
                 y_nodes.append(y)
                 
                 edge_width = 1 + (abs(node['rho']) ** 2.5) * 20
-                hover_texts.append(f"Ticker: {node['ticker']}<br>Força (ρ): {node['rho']:.2f}<br>Salto (Δρ): {delta_val:.2f}")
+                
+                # --- CALCULAR O TAMANHO E O TEXTO DO VOLUME ---
+                vol = node.get('volume', 0.0)
+                node_sizes.append(get_size(vol))
+                vol_text = f"{vol:,.0f}" if vol > 0 else "N/A"
+                
+                hover_texts.append(f"Ticker: {node['ticker']}<br>Força (ρ): {node['rho']:.2f}<br>Salto (Δρ): {delta_val:.2f}<br>Volume: {vol_text}")
                 custom_data.append(node['ticker']) 
                 
-                # --- 3. LÓGICA DO PRIMEIRO CLIQUE (DESTAQUE VISUAL) ---
+                # --- LÓGICA DO PRIMEIRO CLIQUE (DESTAQUE VISUAL) ---
                 is_clicked = (node['ticker'] == clicked_node)
-                border_colors.append('#f1c40f' if is_clicked else color) # Fica com contorno amarelo se clicado
-                border_widths.append(4 if is_clicked else 2)             # Fica com contorno mais grosso se clicado
+                border_colors.append('#f1c40f' if is_clicked else color) 
+                border_widths.append(4 if is_clicked else 2)             
                 
                 # Desenhar a Linha
                 fig.add_trace(go.Scatter(x=[0, x], y=[0, y], mode='lines', 
@@ -1041,11 +1211,11 @@ def register_callbacks(app, engine):
                 raw_name = node['name']
                 wrapped_name = "<br>".join(textwrap.wrap(raw_name, width=13)) 
                 
-                if x > 0.15: shift_x = 18       
-                elif x < -0.15: shift_x = -18   
+                if x > 0.15: shift_x = 22       
+                elif x < -0.15: shift_x = -22   
                 else: shift_x = 0
                 
-                shift_y = 26 if is_top else -26 
+                shift_y = 30 if is_top else -30 
                 
                 fig.add_annotation(
                     x=x, y=y,
@@ -1057,11 +1227,11 @@ def register_callbacks(app, engine):
                     align="center"
                 )
             
-            # Desenhar as Bolas (agora usando as listas de bordas dinâmicas)
+            # Desenhar as Bolas
             fig.add_trace(go.Scatter(x=x_nodes, y=y_nodes, mode='markers', 
                                      customdata=custom_data, 
-                                     marker=dict(size=25, color=color, 
-                                                 line=dict(width=border_widths, color=border_colors)), # <-- Atualizado aqui
+                                     marker=dict(size=node_sizes, color=color, 
+                                                 line=dict(width=border_widths, color=border_colors)), 
                                      hovertext=hover_texts, hoverinfo='text', showlegend=False,
                                      cliponaxis=False))
 

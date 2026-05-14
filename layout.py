@@ -99,9 +99,17 @@ story_sections = html.Div([
     html.Div([
         html.H1("Systemic Risk-Net", style={'color': '#e74c3c', 'fontSize': '3.5em', 'marginBottom': '20px'}),
         html.P("This dashboard helps the investor to not lose money in extreme financial losses", style={'color':'#e74c3c', 'fontSize': '1.8em'}),
-        html.Div("SELECT THE 'MAIN DASHBOARD' TAB ABOVE TO SKIP THE STORY", style={'marginTop': '60px', 'color': '#000', 'backgroundColor': '#39FF14', 'fontSize': '1.1em', 'fontWeight': 'bold', 'padding': '15px 30px', 'borderRadius': '5px'}),
+        
+        # Este não é um botão clicável, mas ajustei o estilo para parecer uma "Pílula de Informação" coerente com o resto!
+        html.Div("SELECT THE 'MAIN DASHBOARD' TAB ABOVE TO SKIP THE STORY", 
+                 style={
+                     'marginTop': '60px', 'backgroundColor': '#39FF14', 'color': '#000000', 
+                     'fontSize': '1.1em', 'fontWeight': 'bold', 'padding': '15px 30px', 
+                     'borderRadius': '8px', 'boxShadow': '0 4px 10px rgba(57, 255, 20, 0.4)'
+                 }),
+                 
         html.P("But how? Lets look at Apple stocks example.", style={'color': '#888', 'marginTop': '40px', 'fontSize': '1.2em'}),
-        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555'})
+        html.Div("↓", style={'color': '#e74c3c','position': 'absolute', 'bottom': '30px', 'fontSize': '2em'})
     ], style=story_style),
     
     # =====================================================================
@@ -111,19 +119,25 @@ story_sections = html.Div([
         # Coluna Esquerda: Gráfico
         html.Div([
             dcc.Graph(id='intro-apple-dist', config={'displayModeBar': False},mathjax=True, style={'height': '550px', 'width': '100%'}),
+            
+            # --- BOTÃO VERMELHO (ZOOM) ---
             html.Button("ZOOM: LEFT TAIL", id='zoom-btn-intro', n_clicks=0, 
                 style={
                     'marginTop': '20px', 
                     'transform': 'translateX(-50px)',
-                    'backgroundColor': 'transparent', 
-                    'color': '#e74c3c',               
-                    'border': '1px solid #e74c3c',    
-                    'padding': '10px 20px', 
+                    'backgroundColor': '#e74c3c', 
+                    'color': '#ffffff',               
+                    'border': 'none',    
+                    'padding': '12px 25px', 
                     'cursor': 'pointer', 
                     'fontSize': '14px',
-                    'borderRadius': '5px'            
+                    'fontWeight': 'bold',
+                    'borderRadius': '8px',
+                    'boxShadow': '0 4px 10px rgba(231, 76, 60, 0.4)',
+                    'transition': '0.3s'            
                 })
         ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+        
         # Coluna Direita: Texto e Eventos
         html.Div([
             html.H1("What is an Extreme Event?", style={'color': '#e74c3c', 'fontSize': '3.5em','marginTop': '0px', 'marginBottom': '15px', 'textAlign': 'left'}),
@@ -148,12 +162,28 @@ story_sections = html.Div([
                     html.Span("2025-10-10", style={'color': '#bbb', 'display': 'inline-block', 'width': '120px'}),
                     html.Span("-3.51%", style={'color': '#e74c3c', 'fontWeight': 'bold', 'display': 'inline-block', 'width': '80px'}),
                     html.Span("Tariffs on China", style={'color': '#fff'}),
-                    html.Span("Lets focus on this example", style={'color': '#39FF14', 'fontWeight': 'bold', 'display': 'inline-block', 'marginLeft': '20px'})
-                ], style={'fontSize': '1.2em', 'margin': '10px 0', 'textAlign': 'left'})
+                    
+                    # --- BOTÃO VERDE (CASE STUDY) ---
+                    html.Button("Highlight Case Study", id='focus-example-btn', n_clicks=0, 
+                                style={
+                                    'backgroundColor': '#39FF14', 
+                                    'color': '#ffffff', 
+                                    'fontWeight': 'bold',
+                                    'border': 'none',
+                                    'borderRadius': '8px', 
+                                    'padding': '8px 15px', 
+                                    'cursor': 'pointer',
+                                    'fontSize': '0.85em', 
+                                    'fontFamily': 'inherit', 
+                                    'transition': '0.3s',
+                                    'marginLeft': '20px',
+                                    'boxShadow': '0 4px 10px rgba(57, 255, 20, 0.4)'
+                                })
+                ], style={'fontSize': '1.2em', 'margin': '10px 0', 'textAlign': 'left', 'display': 'flex', 'alignItems': 'center'})
             ], style={'backgroundColor': '#0a0a0a', 'padding': '25px', 'borderRadius': '10px', 'border': '1px solid #333', 'marginTop': '20px', 'width': '100%'}),
         ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
 
-        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
+        html.Div("↓", style={'color': '#e74c3c','position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
     # =====================================================================
@@ -186,20 +216,24 @@ story_sections = html.Div([
                 html.Div(dcc.Markdown(id='intro-stat-min', mathjax=True, style={'margin': 0}), style={'color': '#e74c3c', 'border': '1px solid #e74c3c', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(231, 76, 60, 0.05)', 'fontSize': '16px'})
             ]),
 
+            # --- BOTÃO AZUL (MONTE CARLO) ---
             html.Button("SHOW INDIVIDUAL PATHS", id='mc-paths-btn', n_clicks=0, 
                         style={
-                            'marginTop': '15px', 
-                            'backgroundColor': 'transparent', 
-                            'color': '#3498db',               
-                            'border': '1px solid #3498db',    
-                            'padding': '10px 20px', 
+                            'marginTop': '25px', 
+                            'backgroundColor': '#3498db', 
+                            'color': '#ffffff',            
+                            'border': 'none',              
+                            'padding': '12px 25px',        
                             'cursor': 'pointer', 
                             'fontSize': '14px',
-                            'borderRadius': '5px'            
+                            'fontWeight': 'bold',          
+                            'borderRadius': '8px',         
+                            'boxShadow': '0 4px 10px rgba(52, 152, 219, 0.4)', 
+                            'transition': '0.3s'            
                         })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
 
-        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
+        html.Div("↓", style={'color': '#3498db','position': 'absolute', 'bottom': '30px', 'fontSize': '2em',  'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
     # =====================================================================
@@ -280,15 +314,25 @@ story_sections = html.Div([
                 mathjax=True, 
                 style={'height': '650px', 'width': '100%'}
             ),
+            
+            # --- BOTÃO AMARELO (NETWORK) ---
             html.Button("HIGHLIGHT SAFE HAVENS", id='network-highlight-btn', n_clicks=0, 
                         style={
-                            'marginTop': '10px', 'backgroundColor': 'transparent', 
-                            'color': '#f1c40f', 'border': '1px solid #f1c40f', 
-                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px', 'borderRadius': '5px'
+                            'marginTop': '10px', 
+                            'backgroundColor': '#f1c40f', 
+                            'color': '#ffffff', 
+                            'border': 'none', 
+                            'padding': '12px 25px', 
+                            'cursor': 'pointer', 
+                            'fontSize': '14px', 
+                            'fontWeight': 'bold',
+                            'borderRadius': '8px',
+                            'boxShadow': '0 4px 10px rgba(241, 196, 15, 0.4)',
+                            'transition': '0.3s'
                         })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
 
-        html.Div("↓", style={'position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'color': '#555', 'left': '50%', 'transform': 'translateX(-50%)'})
+        html.Div("↓", style={'color': '#f1c40f','position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row-reverse', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
     # =====================================================================
@@ -322,22 +366,47 @@ story_sections = html.Div([
                 mathjax=True, 
                 style={'height': '500px', 'width': '100%'}
             ),
+            
+            # --- BOTÃO VERDE ESCURO (MAPA) ---
             html.Button("ZOOM: ASIA FOCUS", id='zoom-asia-btn', n_clicks=0, 
                         style={
-                            'marginTop': '20px', 'backgroundColor': 'transparent', 
-                            'color': '#2ecc71', 'border': '1px solid #2ecc71', 
-                            'padding': '10px 20px', 'cursor': 'pointer', 'fontSize': '14px', 'borderRadius': '5px'
+                            'marginTop': '20px', 
+                            'backgroundColor': '#2ecc71', 
+                            'color': '#ffffff', 
+                            'border': 'none', 
+                            'padding': '12px 25px', 
+                            'cursor': 'pointer', 
+                            'fontSize': '14px', 
+                            'fontWeight': 'bold',
+                            'borderRadius': '8px',
+                            'boxShadow': '0 4px 10px rgba(46, 204, 113, 0.4)',
+                            'transition': '0.3s'
                         })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
-
+        # --- MENSAGEM FINAL NO LUGAR DA SETA ---
+        html.Div("READY? SELECT 'MAIN DASHBOARD'", 
+                 style={
+                     'position': 'absolute', 
+                     'bottom': '30px', 
+                     'left': '50%', 
+                     'transform': 'translateX(-50%)',
+                     'fontSize': '1.1em', 
+                     'color': '#2ecc71',  
+                     'fontWeight': 'bold',
+                     'letterSpacing': '2px',
+                     'backgroundColor': 'rgba(57, 255, 20, 0.05)',
+                     'padding': '10px 25px',
+                     'borderRadius': '30px',
+                     'border': '1px solid rgba(57, 255, 20, 0.3)'
+                 })
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%', 'borderBottom': 'none'})), 
 
 ], style={
-    'height': 'calc(100vh - 50px)',  # <- A Altura da área de apresentação
-    'overflowY': 'scroll',           # <- Garante que só fazemos scroll aqui dentro
-    'scrollSnapType': 'y mandatory', # <- ATIVA O EFEITO ÍMAN
+    'height': 'calc(100vh - 50px)',  
+    'overflowY': 'scroll',           
+    'scrollSnapType': 'y mandatory', 
     'backgroundColor': '#000',
-    'overflowX': 'hidden'            # <- Evita qualquer scroll horizontal acidental
+    'overflowX': 'hidden'            
 })
 
 def get_layout(engine):
