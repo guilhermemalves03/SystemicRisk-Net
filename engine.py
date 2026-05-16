@@ -46,7 +46,7 @@ class SystemicRiskEngine:
                 name_match = self.assets_df[self.assets_df['ticker'] == ticker]['name'].values
                 name = name_match[0] if len(name_match) > 0 else ticker
                 
-                # --- NOVA LÓGICA: EXTRAIR VOLUME DIRETAMENTE NO MOTOR ---
+# --- NOVA LÓGICA: EXTRAIR VOLUME DIRETAMENTE NO MOTOR ---
                 vol = 0.0
                 if self.volume is not None and ticker in self.volume.columns:
                     try:
@@ -54,13 +54,17 @@ class SystemicRiskEngine:
                         if dt in self.volume.index:
                             vol = float(self.volume.loc[dt, ticker])
                         else:
-                            # Se a data exata falhar (feriado/fim de semana), procura a data válida mais próxima!
                             idx = self.volume.index.get_indexer([dt], method='nearest')[0]
                             vol = float(self.volume.iloc[idx][ticker])
+                            
+                        # --- A TUA CORREÇÃO ESTÁ AQUI ---
+                        if pd.isna(vol):  # Se for NaN, força a ser 0
+                            vol = 0.0
+                            
                     except:
-                        pass # Se der erro, mantém o volume a 0
+                        vol = 0.0 # Garante que volta a 0 se der mesmo erro
                         
-                correlations.append({'ticker': ticker, 'name': name, 'rho': stress_rho, 'volume': vol}) # <-- Volume incluído!
+                correlations.append({'ticker': ticker, 'name': name, 'rho': stress_rho, 'volume': vol})
         
         df = pd.DataFrame(correlations).sort_values('rho', ascending=False)
         if len(df) < top_n * 2: return [], []

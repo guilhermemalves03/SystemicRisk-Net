@@ -221,20 +221,28 @@ def register_callbacks(app, engine):
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
         
         fig_dist_main = go.Figure()
-        fig_dist_main.add_trace(go.Bar(x=bin_centers[bin_centers > var_limit], y=counts[bin_centers > var_limit], marker_color='#333', name=r'$\text{Normal}$', showlegend=True))        
-        fig_dist_main.add_trace(go.Bar(x=bin_centers[bin_centers <= var_limit], y=counts[bin_centers <= var_limit], marker_color='#c0392b', name=r'$\text{Tail Stress}$', showlegend=True))
+        
+        # --- APLICADO O HOVERTEMPLATE NAS BARRAS ---
+        fig_dist_main.add_trace(go.Bar(x=bin_centers[bin_centers > var_limit], y=counts[bin_centers > var_limit], marker_color='#333', name=r'$\text{Normal}$', showlegend=True,
+                                       hovertemplate='Return: %{x:.2%}<br>Count: %{y:.1f}<extra>Normal</extra>'))        
+        fig_dist_main.add_trace(go.Bar(x=bin_centers[bin_centers <= var_limit], y=counts[bin_centers <= var_limit], marker_color='#c0392b', name=r'$\text{Tail Stress}$', showlegend=True,
+                                       hovertemplate='Return: %{x:.2%}<br>Count: %{y:.1f}<extra>Tail Stress</extra>'))
         
         x_range = np.linspace(filtered_returns.min(), filtered_returns.max(), 250)
-        fig_dist_main.add_trace(go.Scatter(x=x_range, y=gaussian_kde(filtered_returns)(x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5)))
-        fig_dist_main.add_trace(go.Scatter(x=x_range, y=norm.pdf(x_range, filtered_returns.mean(), filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5)))
+        
+        # --- APLICADO O HOVERTEMPLATE NAS LINHAS ---
+        fig_dist_main.add_trace(go.Scatter(x=x_range, y=gaussian_kde(filtered_returns)(x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5),
+                                           hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>KDE</extra>'))
+        fig_dist_main.add_trace(go.Scatter(x=x_range, y=norm.pdf(x_range, filtered_returns.mean(), filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5),
+                                           hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Gaussian</extra>'))
         
         fig_dist_main.add_vline(x=var_limit, line_dash="dash", line_color="#e74c3c")
         fig_dist_main.add_annotation(x=var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
         fig_dist_main.update_layout(
-            title=rf"$\text{{Aggregated Return Distribution: }} \text{{{selected_ticker}}}$", font=LATEX_FONT, 
+            title=rf"$\text{{Aggregated Return Distribution}}$", font=LATEX_FONT, 
             template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$",
-            xaxis=dict(tickformat='.0%') # <--- FORMATO EM PERCENTAGEM AQUI
+            xaxis=dict(tickformat='.0%')
         )
 
         fig_ridge = go.Figure()
@@ -255,10 +263,9 @@ def register_callbacks(app, engine):
             title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", xaxis_title=r"$\Delta \ln(P_t)$", font=LATEX_FONT, 
             template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(l=10, r=20, t=30, b=40), violingap=0, violingroupgap=0, violinmode='overlay',
-            xaxis=dict(tickformat='.0%') # <--- FORMATO EM PERCENTAGEM AQUI
+            xaxis=dict(tickformat='.0%')
         )
 
-        # Mantemos apenas a lista estática (não clicável) para outras abas que a usem
         list_items = [html.Div([
             html.Span(d.strftime('%Y-%m-%d'), style={'color': '#eee'}), 
             html.Span(f" {extreme_days[d]:.2%}", style={'float':'right','color':'#e74c3c'})
@@ -276,16 +283,24 @@ def register_callbacks(app, engine):
         i_bin_centers = (i_bin_edges[:-1] + i_bin_edges[1:]) / 2
         
         fig_dist_intro = go.Figure()
-        fig_dist_intro.add_trace(go.Bar(x=i_bin_centers[i_bin_centers > i_var_limit], y=i_counts[i_bin_centers > i_var_limit], marker_color='#333', name=r'$\text{Normal}$', showlegend=True))        
-        fig_dist_intro.add_trace(go.Bar(x=i_bin_centers[i_bin_centers <= i_var_limit], y=i_counts[i_bin_centers <= i_var_limit], marker_color='#c0392b', name=r'$\text{Tail Stress}$', showlegend=True))
+        
+        # --- APLICADO O HOVERTEMPLATE NAS BARRAS (STORY MODE) ---
+        fig_dist_intro.add_trace(go.Bar(x=i_bin_centers[i_bin_centers > i_var_limit], y=i_counts[i_bin_centers > i_var_limit], marker_color='#333', name=r'$\text{Normal}$', showlegend=True,
+                                        hovertemplate='Return: %{x:.2%}<br>Count: %{y:.1f}<extra>Normal</extra>'))        
+        fig_dist_intro.add_trace(go.Bar(x=i_bin_centers[i_bin_centers <= i_var_limit], y=i_counts[i_bin_centers <= i_var_limit], marker_color='#c0392b', name=r'$\text{Tail Stress}$', showlegend=True,
+                                        hovertemplate='Return: %{x:.2%}<br>Count: %{y:.1f}<extra>Tail Stress</extra>'))
         
         i_x_range = np.linspace(i_filtered_returns.min(), i_filtered_returns.max(), 250)
-        fig_dist_intro.add_trace(go.Scatter(x=i_x_range, y=gaussian_kde(i_filtered_returns)(i_x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5)))
-        fig_dist_intro.add_trace(go.Scatter(x=i_x_range, y=norm.pdf(i_x_range, i_filtered_returns.mean(), i_filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5)))
+        
+        # --- APLICADO O HOVERTEMPLATE NAS LINHAS (STORY MODE) ---
+        fig_dist_intro.add_trace(go.Scatter(x=i_x_range, y=gaussian_kde(i_filtered_returns)(i_x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5),
+                                            hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>KDE</extra>'))
+        fig_dist_intro.add_trace(go.Scatter(x=i_x_range, y=norm.pdf(i_x_range, i_filtered_returns.mean(), i_filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5),
+                                            hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Gaussian</extra>'))
         
         fig_dist_intro.add_vline(x=i_var_limit, line_dash="dash", line_color="#e74c3c")
         fig_dist_intro.add_annotation(x=i_var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {i_var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
-        # Definimos os limites do gráfico INICIALMENTE para que nunca mais mudem
+        
         orig_min = i_filtered_returns.min()
         orig_max = i_filtered_returns.max()
         pad = (orig_max - orig_min) * 0.05
@@ -296,21 +311,30 @@ def register_callbacks(app, engine):
             margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$",
             xaxis=dict(
                 tickformat='.0%',
-                range=[orig_min - pad, orig_max + pad], # <-- Limites FIXOS
-                autorange=False # <-- Não deixamos o Plotly mexer
+                range=[orig_min - pad, orig_max + pad], 
+                autorange=False 
             ),
             yaxis=dict(
-                range=[0, 65], # <-- Limites FIXOS
+                range=[0, 65], 
                 autorange=False
             )
         )
         
         intro_paths, _ = engine.run_monte_carlo(n_sims=80)
-
+        
+        fig_dist_intro.update_xaxes(fixedrange=True)
+        fig_dist_intro.update_yaxes(fixedrange=True)
+        fig_dist_intro.update_layout(dragmode=False)
+        fig_dist_main.update_xaxes(fixedrange=True)
+        fig_dist_main.update_yaxes(fixedrange=True)
+        fig_dist_main.update_layout(dragmode=False)
+        fig_ridge.update_xaxes(fixedrange=True)
+        fig_ridge.update_yaxes(fixedrange=True)
+        fig_ridge.update_layout(dragmode=False)
+        
         return (
             fig_dist_intro, intro_paths.tolist(),  
             fig_dist_main, fig_ridge, list_items, main_paths.tolist(), sim_es, False, 0
-        
         )
     
     @app.callback(
@@ -354,9 +378,7 @@ def register_callbacks(app, engine):
             return no_update, no_update
             
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        
-        import copy
-        import numpy as np
+
         new_fig = copy.deepcopy(fig)
         
         # 1. ATIVAR A ANIMAÇÃO SUAVE NOVAMENTE!
@@ -431,6 +453,10 @@ def register_callbacks(app, engine):
             else:
                 new_fig['layout']['xaxis']['range'] = [REAL_X_MIN, REAL_X_MAX]
                 new_fig['layout']['yaxis']['range'] = [0, GLOBAL_Y_MAX]
+
+            new_fig['layout']['xaxis']['fixedrange'] = True
+            new_fig['layout']['yaxis']['fixedrange'] = True
+            new_fig['layout']['dragmode'] = False
 
         return new_fig, btn_text
     
@@ -598,7 +624,8 @@ def register_callbacks(app, engine):
             className='intro-table', 
             style={'width': '100%', 'color': '#fff', 'borderCollapse': 'collapse', 'fontSize': '1.2em'}
         )
-
+        
+        fig_map.update_layout(dragmode=False)
         # 6. RETORNO CORRIGIDO (impact_table em vez de table_div)
         return fig_map, impact_table, btn_text
 
@@ -761,6 +788,9 @@ def register_callbacks(app, engine):
         
         if not safe_list_items: 
             safe_list_items = [html.Div("No safe havens.", style={'color': '#777'})]
+
+        fig_map.update_layout(dragmode=False)
+
         return fig_map, safe_list_items
     
 
@@ -809,6 +839,12 @@ def register_callbacks(app, engine):
         # Congelar os eixos Y para não tremerem durante a animação
         y_min, y_max = np.min(paths) * 0.95, np.max(paths) * 1.05
 
+        # --- APLICAR O BLOQUEIO A TODOS OS FRAMES (INCLUINDO O ÚLTIMO) ---
+        fig_mc.update_xaxes(fixedrange=True)
+        fig_mc.update_yaxes(fixedrange=True)
+        fig_mc.update_layout(dragmode=False)
+        fig_mc.update_traces(hoverinfo='skip')
+
         # Se for o último frame (Dia 30)
         if frame == 30: 
             final_es_ret = lower_bound[-1] - 1
@@ -818,10 +854,10 @@ def register_callbacks(app, engine):
             # Devolvemos frame + 1, e metemos disabled=True para parar
             return fig_mc, frame + 1, True, str_max, str_mean, str_min
         
-        # Frames do Dia 0 ao Dia 28
+        # Frames do Dia 0 ao Dia 29
         fig_mc.update_layout(title=f"Monte Carlo Projection (Day {frame}/30)", template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=LATEX_FONT, margin=dict(l=40, r=20, t=50, b=40), xaxis=dict(range=[0, 30]), yaxis=dict(range=[y_min, y_max]))
         
-        return fig_mc, frame + 1, False, str_max, str_mean, str_min    
+        return fig_mc, frame + 1, False, str_max, str_mean, str_min  
 
     @app.callback(
     [Output('intro-mc-sim', 'figure'),
@@ -891,6 +927,11 @@ def register_callbacks(app, engine):
         str_max = rf"$\text{{Max: }} {max_val*100:+.2f}\%$"
         str_mean = rf"$\text{{Mean: }} {mean_val*100:+.2f}\%$"  # <-- Tira o \color{#f1c40f}
         str_min = rf"$\text{{Min: }} {min_val*100:+.2f}\%$"
+
+        fig.update_xaxes(fixedrange=True)
+        fig.update_yaxes(fixedrange=True)
+        fig.update_layout(dragmode=False)
+        fig.update_traces(hoverinfo='skip')
 
         return fig, btn_text, str_max, str_mean, str_min    
 
@@ -1035,6 +1076,8 @@ def register_callbacks(app, engine):
         )
 
         btn_text = "SHOW FULL NETWORK" if show_safe else "HIGHLIGHT SAFE HAVENS"
+        fig.update_layout(dragmode=False)
+
         return fig, btn_text
     
     # 1. Função que GERA OS BOTÕES e pinta o selecionado de ROXO
@@ -1249,12 +1292,23 @@ def register_callbacks(app, engine):
                                  marker=dict(size=65, color='#3498db', line=dict(width=3, color='#3498db')), 
                                  hoverinfo='text', name='Center', showlegend=False, cliponaxis=False))
 
-        fig.update_layout(title=f"Contagion Network - {target_date}",
-                          font=LATEX_FONT, template="plotly_dark",
-                          xaxis=dict(visible=False, range=[-1.9, 1.9], scaleanchor="y", scaleratio=1),
-                          yaxis=dict(visible=False, range=[-1.9, 1.9]),
-                          plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                          margin=dict(l=20, r=20, t=50, b=20),
-                          dragmode=False)
+        # --- UPDATE LAYOUT COM AUTO-SCALE DINÂMICO ---
+        fig.update_layout(
+            title=f"Contagion Network - {target_date}",
+            font=LATEX_FONT, 
+            template="plotly_dark",
+            # Substituímos os ranges fixos [-1.9, 1.9] por autorange=True
+            xaxis=dict(visible=False, autorange=True, scaleanchor="y", scaleratio=1),
+            yaxis=dict(visible=False, autorange=True),
+            plot_bgcolor='rgba(0,0,0,0)', 
+            paper_bgcolor='rgba(0,0,0,0)',
+            # AUMENTÁMOS AS MARGENS para que o Plotly não corte o texto quando fizer o zoom automático!
+            margin=dict(l=70, r=70, t=70, b=70), 
+            dragmode=False
+        )
+
+        # Trancar os eixos como combinámos antes para o utilizador não estragar o enquadramento
+        fig.update_xaxes(fixedrange=True)
+        fig.update_yaxes(fixedrange=True)
 
         return fig

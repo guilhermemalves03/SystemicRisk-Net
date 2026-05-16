@@ -494,19 +494,21 @@ def get_layout(engine):
 
                             # O BOTÃO DE ALTERNÂNCIA (Agora imune aos saltos)
                             html.Button(
-                                "SHOW RIDGELINE PLOT ➔", 
+                                "SHOW RIDGELINE PLOT", 
                                 id='toggle-risk-graphs-btn', 
                                 n_clicks=0, 
                                 style={
                                     'marginTop': '25px', 
-                                    'backgroundColor': 'transparent', 
-                                    'color': '#f1c40f',               
-                                    'border': '1px solid #f1c40f',    
-                                    'padding': '10px 20px', 
+                                    'backgroundColor': '#f1c40f',  # <-- Fundo amarelo sólido
+                                    'color': '#ffffff',            # <-- Letras a branco
+                                    'border': 'none',              # <-- Sem borda
+                                    'padding': '12px 25px',        # <-- Tamanho padrão do Story Mode
                                     'cursor': 'pointer', 
                                     'fontSize': '14px',
-                                    'borderRadius': '5px',
                                     'fontWeight': 'bold',
+                                    'borderRadius': '8px',         # <-- Cantos mais redondos
+                                    'boxShadow': '0 4px 10px rgba(241, 196, 15, 0.4)', # <-- Brilho amarelo
+                                    'transition': '0.3s',
                                     'alignSelf': 'center'             
                                 }
                             )
@@ -528,7 +530,7 @@ The Ridgeline Plot models the density KDE over the last 12 months, split by quar
                         """, mathjax=True)
                     ], style=explanation_box_style)
                     
-                ], style={'display': 'flex', 'minHeight': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box'}) # Ajustado altura
+                ], style={'display': 'flex', 'height': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box', 'overflow': 'hidden'}) # <--- ALTERAÇÕES FEITAS AQUI!
             ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
                selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #e74c3c', 'borderBottom': 'none', 'padding': '10px'}),
 
@@ -561,35 +563,31 @@ $$ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}]$$
                selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #3498db', 'borderBottom': 'none', 'padding': '10px'}),
 
             dcc.Tab(label='Market Connections', value='tab-network', children=[
-                
+                html.Div([
+
+                                    
                 # MEMÓRIA INVISÍVEL: Guarda a data que está atualmente selecionada
                 dcc.Store(id='selected-network-date', data=None),
                 dcc.Store(id='node-click-memory', data=None),
-
-                # === CONTAINER PRINCIPAL ===
-                html.Div([
                     
-                    # --- COLUNA 1: Esquerda (Lista de Datas Clicáveis) ---
+                    # --- 1. CAIXA ESQUERDA (Stress Events) ---
                     html.Div([
                         html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                        html.Div(id='extreme-dates-list-network', style={'maxHeight': '500px', 'overflowY': 'auto', 'paddingRight': '5px'})
-                    ], style={
-                        'width': '250px', 'minWidth': '250px', 'padding': '15px', 
-                        'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a', 
-                        'boxSizing': 'border-box'
-                    }),
+                        html.Div(id='extreme-dates-list-network', style={'fontSize': '14px', 'maxHeight': '800px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                    ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
                     
-                    # --- COLUNA 2: Centro (Grafo) ---
+                    # --- 2. CAIXA CENTRAL (O Grafo) ---
                     html.Div([
                         dcc.Graph(
                             id='network-graph', 
-                            className='clicavel', 
-                            style={'flex': '1', 'width': '100%', 'height': '100%'}, 
-                            config={'displayModeBar': False}
+                            config={'displayModeBar': False}, 
+                            mathjax=True, 
+                            # MUDAR AQUI: Em vez de 750px, usamos 100% para ele bater nos limites exatos sem criar scroll
+                            style={'height': '100%', 'width': '100%'} 
                         )
-                    ], style={'flex': '1', 'backgroundColor': '#000', 'display': 'flex', 'flexDirection': 'column'}),
+                    ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
                     
-                    # --- COLUNA 3: Direita (Caixa de Texto) ---
+                    # --- 3. CAIXA DIREITA (Metodologia) ---
                     html.Div([
                         html.H3("CONTAGION TOPOLOGY", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
                         dcc.Markdown(r"""
@@ -598,14 +596,15 @@ Grafo em estrela das dependências em eventos extremos.
 * **Top (Vermelho):** Ativos com maior correlação positiva (Risco Sistémico / Efeito Contágio).
 * **Bottom (Verde):** Ativos com menor correlação ou correlação negativa (Hedges / Safe Havens).
 
-A espessura da ligação representa a força absoluta da correlação ($\rho_{\text{stress}}$).
+A espessura da ligação representa a força absoluta da correlação ($\rho_{stress}$).
                         """, mathjax=True)
                     ], style=explanation_box_style)
                     
-                ], style={'display': 'flex', 'flexDirection': 'row', 'alignItems': 'stretch', 'minHeight': 'calc(100vh - 164px)', 'backgroundColor': '#000', 'padding': '15px', 'boxSizing': 'border-box'})
+                # MUDAR AQUI: Aplicar o bloqueio de altura e scroll exatamente como na Aba 1!
+                ], style={'display': 'flex', 'height': 'calc(100vh - 164px)', 'overflow': 'hidden', 'boxSizing': 'border-box'})
                 
             ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
-               selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #f1c40f', 'borderBottom': 'none', 'padding': '10px'}),
+               selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #e74c3c', 'borderBottom': 'none', 'padding': '10px'}),            
             
             dcc.Tab(label='Global Contagion', value='tab-map', children=[
                 dcc.Store(id='selected-map-date', data=None),
