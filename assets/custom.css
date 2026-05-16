@@ -57,3 +57,17 @@ body, html {
 .clicavel .js-plotly-plot .plotly .nsewdrag {
     cursor: pointer !important;
 }
+
+@keyframes flash-blue {
+    0% {
+        box-shadow: 0 0 0 0px rgba(52, 152, 219, 0.7);
+        border: 1px solid #3498db !important;
+    }
+    50% {
+        box-shadow: 0 0 15px 5px rgba(52, 152, 219, 0.9);
+        border: 1px solid #3498db !important;
+    }
+    100% {
+        box-shadow: 0 0 0 0px rgba(52, 152, 219, 0);
+    }
+}

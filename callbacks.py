@@ -8,6 +8,7 @@ from plotly.colors import sample_colorscale
 from layout import COUNTRY_COORDS
 import textwrap
 import copy
+import dash
 
 LATEX_FONT = dict(family="EB Garamond, serif", size=16)
 
@@ -38,6 +39,29 @@ def calculate_dorling_layout(lons, lats, radii, max_iter=300):
     return x, y
 
 def register_callbacks(app, engine):
+
+    app.clientside_callback(
+        """
+        function(current_value) {
+            setTimeout(function() {
+                var dropdown = document.getElementById('main-asset-dropdown');
+                if (dropdown) {
+                    var el = dropdown.querySelector('.Select-control') || 
+                             dropdown.querySelector('div[class*="control"]') || 
+                             dropdown;
+                    
+                    el.style.animation = 'none';
+                    void el.offsetWidth; // Força o reflow do browser para reiniciar a animação
+                    el.style.animation = 'flash-blue 0.8s ease-in-out';
+                }
+            }, 60);
+            return '';
+        }
+        """,
+        Output('main-asset-dropdown', 'className'),
+        Input('main-asset-dropdown', 'value'),
+        prevent_initial_call=True
+    )
     
     @app.callback(
         [Output('volatility-modal', 'style'), 
@@ -46,7 +70,7 @@ def register_callbacks(app, engine):
         [Input('contagion-map', 'clickData'), 
          Input('close-modal-btn', 'n_clicks')],
         [State('volatility-modal', 'style'), 
-         State('selected-stress-date', 'data'),
+         State('selected-map-date', 'data'), # <--- CORREÇÃO 1: Lê o store correto do mapa
          State('main-asset-dropdown', 'value')] 
     )
     def toggle_modal(clickData, close_clicks, modal_style, selected_date, main_ticker):
@@ -69,12 +93,9 @@ def register_callbacks(app, engine):
             
             vol_data_main = engine.get_realized_volatility(main_ticker)
             
-            # ==========================================
-            # 3. APENAS O NOME DO PAÍS
-            # ==========================================
             try:
                 row_c = engine.assets_df[engine.assets_df['ticker'] == ticker].iloc[0]
-                nome_clicado = row_c['country'] # <--- AGORA MOSTRA APENAS "Turkey"
+                nome_clicado = row_c['country']
             except:
                 nome_clicado = ticker 
                 
@@ -104,8 +125,14 @@ def register_callbacks(app, engine):
                 line=dict(color='#e74c3c', width=2) 
             ))
             
+            # <--- CORREÇÃO 2: Garante a data por defeito se o utilizador ainda não clicou na lista
+            if not selected_date:
+                extreme_days, _, _ = engine.get_extreme_events(months=12)
+                if not extreme_days.empty:
+                    selected_date = extreme_days.index[-1].strftime('%Y-%m-%d')
+
             if selected_date:
-                fig.add_vline(x=selected_date, line_dash="dash", line_color="#39FF14")
+                fig.add_vline(x=selected_date, line_dash="dash", line_color="#39FF14", layer="below")
                 fig.add_annotation(x=selected_date, y=0.95, yref="paper", text="Stress Event", 
                                    showarrow=False, xanchor="left", font=dict(color="#39FF14", size=14))
 
@@ -118,47 +145,26 @@ def register_callbacks(app, engine):
                 paper_bgcolor='rgba(0,0,0,0)', 
                 margin=dict(l=40, r=20, t=50, b=40), 
                 font=LATEX_FONT, 
-                
                 hovermode='x unified', 
-                hoverlabel=dict(
-                    bgcolor="rgba(17, 17, 17, 0.95)", 
-                    font_color="white",               
-                    bordercolor="rgba(255, 255, 255, 0.1)" 
-                ),
-                
-                xaxis=dict(
-                    showgrid=False,        
-                    zeroline=False,        
-                    showspikes=True,       
-                    spikecolor="#f1c40f",  
-                    spikethickness=1,      
-                    spikedash="dash",      
-                    spikemode="across"     
-                ),
-                yaxis=dict(
-                    tickformat='.2%',
-                    showgrid=False,        
-                    zeroline=False
-                ),
-                
-                # ==========================================
-                # LEGENDA VERTICAL NO CANTO SUPERIOR ESQUERDO
-                # ==========================================
+                hoverlabel=dict(bgcolor="rgba(17, 17, 17, 0.95)", font_color="white", bordercolor="rgba(255, 255, 255, 0.1)"),
+                xaxis=dict(showgrid=False, zeroline=False, showspikes=True, spikecolor="#f1c40f", spikethickness=1, spikedash="dash", spikemode="across"),
+                yaxis=dict(tickformat='.2%', showgrid=False, zeroline=False),
                 legend=dict(
-                    orientation="v",           
-                    yanchor="top",             
-                    y=0.98,                    # Posição Y perto do topo
-                    xanchor="right",           # <--- Alinha pela direita
-                    x=0.98,                    # <--- Posição X encostada à direita
-                    bgcolor="rgba(0,0,0,0.5)"  
-                )
+    orientation="v",           
+    yanchor="top",             
+    y=0.98,                    
+    xanchor="right",           
+    x=0.98,                    
+    bgcolor="rgba(17, 17, 17, 1)",          # <-- CORREÇÃO: Fundo totalmente opaco (cor do modal)
+    bordercolor="rgba(255, 255, 255, 0.2)", # <-- Bónus: Uma borda fina para destacar do gráfico
+    borderwidth=1
+)
             )
             
             modal_style['display'] = 'block'
-            
             return modal_style, fig, no_update
             
-        return no_update, no_update, no_update 
+        return no_update, no_update, no_update
 
     @app.callback(
         Output('selected-stress-date', 'data'),
@@ -746,7 +752,7 @@ def register_callbacks(app, engine):
                 mode='text', 
                 text=[map_rows[i]['Ticker']], 
                 customdata=[map_rows[i]['Ticker']], # <--- A SOLUÇÃO ESTÁ AQUI
-                textfont=dict(color='white', size=11, family="sans-serif"), 
+                textfont=dict(color='black', size=11, family="sans-serif"), 
                 hoverinfo='skip', 
                 showlegend=False
             ))
@@ -849,7 +855,7 @@ def register_callbacks(app, engine):
         if frame == 30: 
             final_es_ret = lower_bound[-1] - 1
             fig_mc.add_hline(y=lower_bound[-1], line_dash="dash", line_color="#FF0000", annotation_text=rf"$ES_{{1\%}} = {final_es_ret*100:.2f}\%$", annotation_position="bottom left", annotation_font=dict(color="#FF0000", size=16))
-            fig_mc.update_layout(title=r"$\text{Simulated Paths: } S_t = S_0 \exp\left(\sum r_i\right)$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=40), xaxis=dict(range=[0, 30]), yaxis=dict(range=[y_min, y_max]))
+            fig_mc.update_layout(title=r"$\text{Simulated Paths: }$", font=LATEX_FONT, template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(l=40, r=20, t=50, b=40), xaxis=dict(range=[0, 30]), yaxis=dict(range=[y_min, y_max]))
             
             # Devolvemos frame + 1, e metemos disabled=True para parar
             return fig_mc, frame + 1, True, str_max, str_mean, str_min
@@ -909,7 +915,7 @@ def register_callbacks(app, engine):
         
         fig.update_layout(
             title=title, title_x=0.5, font=LATEX_FONT, template="plotly_dark",
-            xaxis_title="Days", yaxis_title=r"$\text{Price Multiplier } (S_t / S_0)$",
+            xaxis_title="Days", yaxis_title=r"$\text{Price Multiplier } $",
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(l=40, r=20, t=50, b=40)
         )
@@ -1123,7 +1129,7 @@ def register_callbacks(app, engine):
 
     @app.callback(
         [Output('main-asset-dropdown', 'value'),
-         Output('network-graph', 'clickData')], # <-- Limpa a memória do clique
+         Output('network-graph', 'clickData')], 
         [Input('network-graph', 'clickData')],
         prevent_initial_call=True
     )
@@ -1135,9 +1141,13 @@ def register_callbacks(app, engine):
         
         if 'customdata' in point:
             clicked_ticker = point['customdata']
+            if isinstance(clicked_ticker, list): 
+                clicked_ticker = clicked_ticker[0]
+                
             return clicked_ticker, None 
             
         return no_update, no_update
+            
         
     @app.callback(
         Output('selected-network-date', 'data'),
@@ -1273,10 +1283,9 @@ def register_callbacks(app, engine):
             # Desenhar as Bolas
             fig.add_trace(go.Scatter(x=x_nodes, y=y_nodes, mode='markers', 
                                      customdata=custom_data, 
-                                     marker=dict(size=node_sizes, color=color, 
+                                     marker=dict(size=node_sizes, color=color, opacity=1.0, 
                                                  line=dict(width=border_widths, color=border_colors)), 
-                                     hovertext=hover_texts, hoverinfo='text', showlegend=False,
-                                     cliponaxis=False))
+                                     hovertext=hover_texts, hoverinfo='text', showlegend=False, cliponaxis=False))
 
         pos_angles = np.linspace(np.pi/6, 5*np.pi/6, len(top_pos))
         add_nodes_edges(top_pos, pos_angles, '#e74c3c', is_top=True)
@@ -1312,3 +1321,5 @@ def register_callbacks(app, engine):
         fig.update_yaxes(fixedrange=True)
 
         return fig
+    
+    

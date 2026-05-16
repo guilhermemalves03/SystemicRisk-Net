@@ -94,22 +94,124 @@ tab_selected_style = {
 story_sections = html.Div([
     
     # =====================================================================
-    # 1º SLIDE: TÍTULO INICIAL
+    # 1º SLIDE: TÍTULO INICIAL (SEM BOTÃO CTA)
     # =====================================================================
     html.Div([
-        html.H1("Systemic Risk-Net", style={'color': '#e74c3c', 'fontSize': '3.5em', 'marginBottom': '20px'}),
-        html.P("This dashboard helps the investor to not lose money in extreme financial losses", style={'color':'#e74c3c', 'fontSize': '1.8em'}),
+        html.Img(
+            src='/assets/titulo_3d.png', 
+            style={
+                'maxWidth': '800px',      
+                'width': '100%',          
+                'height': 'auto',         
+                'marginBottom': '10px',   
+                'display': 'block',
+                'marginLeft': 'auto',     
+                'marginRight': 'auto'
+            }
+        ),
         
-        # Este não é um botão clicável, mas ajustei o estilo para parecer uma "Pílula de Informação" coerente com o resto!
-        html.Div("SELECT THE 'MAIN DASHBOARD' TAB ABOVE TO SKIP THE STORY", 
-                 style={
-                     'marginTop': '60px', 'backgroundColor': '#39FF14', 'color': '#000000', 
-                     'fontSize': '1.1em', 'fontWeight': 'bold', 'padding': '15px 30px', 
-                     'borderRadius': '8px', 'boxShadow': '0 4px 10px rgba(57, 255, 20, 0.4)'
-                 }),
+        html.P(
+            "A comprehensive solution to fortify capital against extreme market volatility.", 
+            style={
+                'color': '#d1d5db', 
+                'fontSize': '1.6em', 
+                'fontFamily': '"EB Garamond", serif',
+                'letterSpacing': '1px',
+                'marginTop': '10px'
+            }
+        ),
+        
+        # --- NOVO INDICADOR DE NAVEGAÇÃO (Substitui o botão) ---
+        html.Div([
+            html.Span("↑ ", style={'fontSize': '1.3em', 'fontWeight': 'bold'}),
+            html.Span("Select 'Main Dashboard' in the top menu for immediate access")
+        ], style={
+            'color': '#888888', 
+            'marginTop': '60px', 
+            'fontSize': '1.1em',
+            'letterSpacing': '1px',
+            'fontFamily': '"EB Garamond", serif'
+        }),
                  
-        html.P("But how? Lets look at Apple stocks example.", style={'color': '#888', 'marginTop': '40px', 'fontSize': '1.2em'}),
-        html.Div("↓", style={'color': '#e74c3c','position': 'absolute', 'bottom': '30px', 'fontSize': '2em'})
+        html.P(
+            "Or scroll down to understand the mechanics: A case study on Apple Inc.", 
+            style={
+                'color': '#666666', 
+                'marginTop': '25px', 
+                'fontSize': '1.2em',
+                'fontStyle': 'italic',
+                'fontFamily': '"EB Garamond", serif'
+            }
+        ),
+        
+        html.Div(
+            "↓", 
+            style={
+                'color': '#d4af37', 
+                'position': 'absolute', 
+                'bottom': '30px', 
+                'fontSize': '2em'
+            }
+        )
+    ], style=story_style),
+
+    # =====================================================================
+    # NOVO SLIDE: THE MATHEMATICAL FOUNDATION (Educação)
+    # =====================================================================
+    html.Div([
+        html.H1("The Foundations of Risk", 
+                style={'color': '#d4af37', 'fontSize': '3.2em', 'marginBottom': '40px', 'fontWeight': 'normal'}),
+        
+        # Container de 3 Colunas (Tiles)
+        html.Div([
+            
+            
+            # Coluna 1: Retornos (Foco no Conceito)
+            html.Div([
+                html.Div(html.I(className="fa-solid fa-chart-line"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
+                html.H3("1. Daily Returns", style={'color': '#fff', 'marginBottom': '15px'}),
+                dcc.Markdown(r"""
+At its core, we just want to know the daily variation: *Did the stock go up or down today compared to yesterday?*
+
+To calculate this, we use a mathematical tool called a **Logarithm**:
+
+$$r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)$$
+
+* $P_t$: Price **Today**
+* $P_{t-1}$: Price **Yesterday**
+
+*Why this tool?* Think of it as a **scale equalizer**. It translates raw price changes into a standardized format, allowing us to easily visualize and compare a $150 stock alongside a $3,000 stock without visual distortion.
+                """, mathjax=True, style={'color': '#bbb', 'fontSize': '1.1em'})
+            ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'}),
+            # Coluna 2: A Curva de Sino
+            html.Div([
+                html.Div(html.I(className="fa-solid fa-gaussian-blur"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
+                html.H3("2. Distributions", style={'color': '#fff', 'marginBottom': '15px'}),
+                dcc.Markdown(r"""
+We map every daily return onto a **Probability Curve**.
+* **Center:** Normal market days.
+* **Left Tail:** Where the "Black Swans" (extreme crashes) live.
+Our goal is to measure the thickness of this left tail.
+                """, mathjax=True, style={'color': '#bbb', 'fontSize': '1.1em'})
+            ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'}),
+
+            # Coluna 3: Correlação de Stress
+            html.Div([
+                html.Div(html.I(className="fa-solid fa-circle-nodes"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
+                html.H3("3. Correlation ($\\rho$)", style={'color': '#fff', 'marginBottom': '15px'}),
+                dcc.Markdown(r"""
+Correlation measures how two assets move together. 
+$$\rho \in [-1, 1]$$
+In a crisis, correlations usually **spike to 1**. This is "Contagion": when everything falls at the same time.
+                """, mathjax=True, style={'color': '#bbb', 'fontSize': '1.1em'})
+            ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'}),
+
+        ], style={'display': 'flex', 'justifyContent': 'center', 'width': '90%', 'maxWidth': '1200px'}),
+
+        html.P("Now that you know the basics, let's see them in action.", 
+               style={'color': '#666', 'marginTop': '50px', 'fontSize': '1.2em', 'fontStyle': 'italic'}),
+        
+        html.Div("↓", style={'color': '#d4af37', 'position': 'absolute', 'bottom': '30px', 'fontSize': '2em'})
     ], style=story_style),
     
     # =====================================================================
@@ -441,8 +543,9 @@ def get_layout(engine):
                         options=options,
                         value='AAPL',
                         clearable=False,
-                        style={'color': '#000'} # Texto da dropdown a escuro para ler bem
-                    )
+                        className='', # Começa sem classe de animação
+                        style={'color': '#000'}
+)
                 ], style={'width': '300px', 'marginLeft': '20px'}), # Ajusta o 'width' conforme precisares
 
                 # 2. LADO DIREITO: O Título da Dashboard
@@ -516,18 +619,25 @@ def get_layout(engine):
                     ], style={'display': 'flex', 'flex': '1', 'backgroundColor': '#000'}),
                     
                     html.Div([
-                        html.H3("METHODOLOGY", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
-                        dcc.Markdown(r"""
-This section models the empirical density of *log-returns*:
+                        html.H3("RISK PROFILE ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
+                        dcc.Markdown("""
+This chart maps daily return frequencies. Normal days group around the center (0%).
 
-$$r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)$$
+**The Danger Zone (Left Tail)**
 
-The tail risk is bounded by the **Value at Risk (VaR)** at 99%, defining the critical region of extreme losses:
+The red dashed line is the **Value at Risk (VaR)**, bounding the worst 1% of days.
 
-$$\Pr(r_t \le -VaR_{0.99}) = 0.01$$
+* A **"fat" left tail** shows high vulnerability to extreme crashes.
+* **Red bars** highlight the exact days the asset hit this critical zone.
 
-The Ridgeline Plot models the density KDE over the last 12 months, split by quarters.
-                        """, mathjax=True)
+**Tracking Risk Over Time**
+
+Market risk is dynamic. Click **SHOW RIDGELINE PLOT** below to view monthly shifts and:
+
+1. Identify the worst-performing months.
+2. Spot seasonal volatility.
+3. Monitor if tail risk is expanding or shrinking.
+                        """, style={'color': '#bbb', 'fontSize': '15px', 'lineHeight': '1.6'})
                     ], style=explanation_box_style)
                     
                 ], style={'display': 'flex', 'height': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box', 'overflow': 'hidden'}) # <--- ALTERAÇÕES FEITAS AQUI!
@@ -546,16 +656,24 @@ The Ridgeline Plot models the density KDE over the last 12 months, split by quar
                     ], style={'flex': '1', 'backgroundColor': '#000', 'display': 'flex', 'flexDirection': 'column'}),
                     
                     html.Div([
-                        html.H3("STOCHASTIC DYNAMICS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
-                        dcc.Markdown(r"""
-Projection of paths generated through *bootstrapping* the historical empirical returns. The process evolves according to the dynamics:
+                        html.H3("STRESS TEST ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
+                        dcc.Markdown("""
+This simulation projects thousands of possible future paths over the next 30 days based on the asset's historical behavior. 
 
-$$S_T = S_0 \exp\left(\sum_{t=1}^T r_t\right)$$
+Instead of showing a messy web of lines, we aggregate the outcomes into clear probability zones:
 
-The lower band dynamically tracks the **Expected Shortfall (ES)** at 1%, quantifying the expected value of severe loss:
+* **Green Band (Top 1%):** The best-case optimistic scenarios.
+* **Yellow Line (Mean):** The average expected trajectory.
+* **Red Band (Bottom 1%):** The critical danger zone.
 
-$$ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}]$$
-                        """, mathjax=True)
+**Focusing on the Downside**
+
+The dashed red line dynamically tracks the **Expected Shortfall (ES)**. While the previous chart showed you *where* the worst days start, this line estimates *how much* you are actually expected to lose when a severe crash happens over a 30-day period.
+
+**Investor Insight**
+
+Compare the final stats below the chart. If the potential minimum loss (Min) drastically outweighs the potential maximum gain (Max), the asset carries extreme asymmetrical risk.
+                        """, style={'color': '#bbb', 'fontSize': '15px', 'lineHeight': '1.6'})
                     ], style=explanation_box_style)
                     
                 ], style={'display': 'flex', 'minHeight': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box'})
@@ -589,15 +707,21 @@ $$ES_{0.01} = \mathbb{E}[r_t \mid r_t \le -VaR_{0.01}]$$
                     
                     # --- 3. CAIXA DIREITA (Metodologia) ---
                     html.Div([
-                        html.H3("CONTAGION TOPOLOGY", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
-                        dcc.Markdown(r"""
-Grafo em estrela das dependências em eventos extremos.
+                        html.H3("CONTAGION TOPOLOGY ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
+                        dcc.Markdown("""
+This star network visualizes interconnected market dependency during extreme stress events. 
 
-* **Top (Vermelho):** Ativos com maior correlação positiva (Risco Sistémico / Efeito Contágio).
-* **Bottom (Verde):** Ativos com menor correlação ou correlação negativa (Hedges / Safe Havens).
+When your main asset crashes, shocks transmit across corporate boundaries. Use this topology to read the direction of market pressure:
 
-A espessura da ligação representa a força absoluta da correlação ($\rho_{stress}$).
-                        """, mathjax=True)
+**Systemic Risk Amplifiers (Top Hemisphere - Red)**
+Assets mapped to the upper section fall alongside your main stock. A thick line indicates high statistical dependency ($\rho$), signaling that a crash here will heavily drag down or multiply losses in your focal asset due to systemic contagion.
+
+**Defensive Shields & Safe Havens (Bottom Hemisphere - Green)**
+Assets in the lower section move independently or in opposite directions during a crash, serving as natural portfolio hedges.
+
+**Trading Volume & Scale**
+The size of each peripheral node reflects its trading volume. Large bubbles indicate heavy market capitalization and institutional liquidity, showing you whether your portfolio shields or risk threats are major market players or smaller assets.
+                        """, style={'color': '#bbb', 'fontSize': '15px', 'lineHeight': '1.6'})
                     ], style=explanation_box_style)
                     
                 # MUDAR AQUI: Aplicar o bloqueio de altura e scroll exatamente como na Aba 1!
@@ -676,24 +800,27 @@ A espessura da ligação representa a força absoluta da correlação ($\rho_{st
                     
                     # --- COLUNA 3: Direita (Caixa de Texto) ---
                     html.Div([
-                        html.H3("SYSTEMIC RISK", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
-                        dcc.Markdown(r"""
-Dorling Cartogram (Circles = Trading Volume).
-Contagion analysis on specific events ($\pm 15$ days). The correlation shock is defined by:
+                        html.H3("GLOBAL CONTAGION ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '15px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
+                        dcc.Markdown("""
+This Dorling cartogram maps geographic shock transmission, scaling countries by trading volume to remove area bias.
 
-$$\Delta \rho = \rho_{\text{stress}} - \rho_{\text{calm}}$$
+**Visual Metric Guide:**
+* **Red Bubbles:** Markets where dependency spiked ($\Delta\rho > 0$) during the crash (High Contagion).
+* **Blue Bubbles:** Markets that decoupled ($\Delta\rho < 0$), absorbing the shock efficiently.
+* **Bubble Size:** Represents market liquidity and trading volume.
 
-Assets that exhibit $\Delta \rho < 0$ **and** $\rho_{\text{stress}} \le 0$ act as true *Safe Havens* during main market crashes.
-                        """, mathjax=True)
+**Portfolio Protection:**
+Check the **Safe Havens** sidebar. It automatically filters countries where the shock dropped ($\Delta\rho < 0$) *and* absolute stress correlation remained negative or zero ($\rho_{\text{stress}} \le 0$). Use these assets as your core structural diversifiers.
+                        """, style={'color': '#bbb', 'fontSize': '13.5px', 'lineHeight': '1.4'})
                     ], style=dict(explanation_box_style, **{
                         'width': '300px',            
                         'minWidth': '300px', 
-                        'margin': '15px',            # Cria espaço em volta da caixa
+                        'margin': '15px',            
                         'boxSizing': 'border-box',
                         'display': 'flex',
                         'flexDirection': 'column',
                         'justifyContent': 'flex-start',
-                        'height': 'auto'             # Deixa o Stretch fazer a magia!
+                        'height': 'auto'             
                     }))
                     
                 ], style={'display': 'flex', 'flexDirection': 'row', 'alignItems': 'stretch', 'minHeight': 'calc(100vh - 164px)', 'backgroundColor': '#000'}) 
@@ -718,15 +845,15 @@ Assets that exhibit $\Delta \rho < 0$ **and** $\rho_{\text{stress}} \le 0$ act a
     }
 
     estilo_aba_ativa = {
-        'backgroundColor': '#111111', # Fundo igual ao resto da dashboard
-        'color': '#39FF14',           # O teu verde neon para destacar a aba escolhida!
-        'fontSize': '18px',           # Mesmo tamanho de letra
-        'fontWeight': 'bold',
-        'borderTop': '3px solid #39FF14', # Uma barra verde grossa no topo para estilo
-        'borderBottom': 'none',
-        'borderLeft': '1px solid #333',
-        'borderRight': '1px solid #333',
-        'padding': '12px'
+    'backgroundColor': '#111111',
+    'color': '#d4af37',               # <-- Novo tom dourado elegante
+    'fontSize': '18px',
+    'fontWeight': 'bold',
+    'borderTop': '3px solid #d4af37', # <-- Barra superior a condizer
+    'borderBottom': 'none',
+    'borderLeft': '1px solid #333',
+    'borderRight': '1px solid #333',
+    'padding': '12px'
     }
 
     # ==========================================
