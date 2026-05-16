@@ -713,6 +713,11 @@ def register_callbacks(app, engine):
         target_date = selected_date if selected_date else (extreme_days.index[-1].strftime('%Y-%m-%d') if not extreme_days.empty else None)
         
         if not target_date: return go.Figure(), [html.Div("Insufficient data.")]
+        try:
+            date_obj = pd.to_datetime(target_date)
+            formatted_date = date_obj.strftime('%B %d, %Y') # Ex: February 12, 2026
+        except:
+            formatted_date = target_date
 
         country_assets = engine.assets_df[engine.assets_df['sector'] == 'Country']
         map_rows = []
@@ -780,7 +785,7 @@ def register_callbacks(app, engine):
         ))
         
         # --- CORREÇÃO AQUI: Margens ajustadas (b=80, t=60) para a barra de cor ter espaço e não ficar cortada ---
-        fig_map.update_layout(title=rf"$\text{{Systemic Risk Cartogram - }} {target_date}$", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=60, b=80))
+        fig_map.update_layout(title=f"Systemic Risk Cartogram: {formatted_date}", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=60, b=80))
 
         safe_havens = sorted([row for row in map_rows if row['Delta'] < 0 and row['Stress'] <= 0], key=lambda x: x['Stress'])
         
