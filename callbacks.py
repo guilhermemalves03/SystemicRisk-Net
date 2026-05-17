@@ -292,7 +292,8 @@ def register_callbacks(app, engine):
             title=rf"$\text{{Aggregated Return Distribution}}$", font=LATEX_FONT, 
             template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(l=40, r=20, t=50, b=10), 
-            xaxis_title=r"$\Delta \ln(P_t)$ - Difference of Prices (Scaled)", # <-- MUDAR AQUI
+            xaxis_title=r"$\Delta \ln(P_t) \text{ - Difference of Prices}$", # <--- Eixo X Atualizado
+            yaxis_title="Counts",                                # <--- Eixo Y Adicionado
             xaxis=dict(tickformat='.0%')
         )
 
@@ -311,8 +312,9 @@ def register_callbacks(app, engine):
                 fig_ridge.add_annotation(x=m_ret, y=month_label, text=f"μ: {m_ret*100:.2f}%", showarrow=False, yshift=18, bgcolor="rgba(0,0,0,0.7)", bordercolor=colors[i], font=dict(color="white", size=11, family="sans-serif"))
         
         fig_ridge.update_layout(
-            title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", 
-            xaxis_title=r"$\Delta \ln(P_t)$ - Difference of Prices (Scaled)", # <-- MUDAR AQUI
+            title=rf"$\text{{Monthly Return Distribution (Last 12 Months)}}$", 
+            xaxis_title=r"$\Delta \ln(P_t) \text{ - Difference of Prices}$", 
+            
             font=LATEX_FONT, 
             template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(l=10, r=20, t=30, b=40), violingap=0, violingroupgap=0, violinmode='overlay',
@@ -349,30 +351,30 @@ def register_callbacks(app, engine):
         # --- APLICADO O HOVERTEMPLATE NAS LINHAS (STORY MODE) ---
         fig_dist_intro.add_trace(go.Scatter(
             x=i_x_range, y=gaussian_kde(i_filtered_returns)(i_x_range), 
-            name='Realized Risk Profile', # <-- MUDADO AQUI
+            name='Realized Risk Profile',
             line=dict(color='#3498db', width=2.5),
             hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Realized Risk</extra>'
         ))
         
         fig_dist_intro.add_trace(go.Scatter(
             x=i_x_range, y=norm.pdf(i_x_range, i_filtered_returns.mean(), i_filtered_returns.std()), 
-            name='Theoretical Baseline', # <-- MUDADO AQUI
+            name='Theoretical Baseline',
             line=dict(color='#777', dash='dash', width=1.5),
             hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Baseline</extra>'
         ))
         
-        fig_dist_intro.add_vline(x=i_var_limit, line_dash="dash", line_color="#e74c3c")
-        fig_dist_intro.add_annotation(x=i_var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {i_var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
-        
+        # 1º: CALCULAMOS AS VARIÁVEIS DE LIMITE PRIMEIRO
         orig_min = i_filtered_returns.min()
         orig_max = i_filtered_returns.max()
         pad = (orig_max - orig_min) * 0.05
         
+        # 2º: APLICAMOS O UPDATE_LAYOUT UMA ÚNICA VEZ
         fig_dist_intro.update_layout(
             title=rf"$\text{{Aggregated Return Distribution: AAPL}}$", font=LATEX_FONT, 
             template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(l=40, r=20, t=50, b=10), 
-            xaxis_title=r"$\Delta \ln(P_t)$ - Difference of Prices (Scaled)", # <-- MUDAR AQUI
+            xaxis_title=r"$\Delta \ln(P_t) \text{ - Difference of Prices}$",  # <--- Eixo X Atualizado
+            yaxis_title="Counts",                                # <--- Eixo Y Adicionado
             xaxis=dict(
                 tickformat='.0%',
                 range=[orig_min - pad, orig_max + pad], 
