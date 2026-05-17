@@ -147,7 +147,7 @@ story_sections = html.Div([
         html.Div(
             "↓", 
             style={
-                'color': '#d4af37', 
+                'color': "#b07b5a", 
                 'position': 'absolute', 
                 'bottom': '30px', 
                 'fontSize': '2em'
@@ -289,20 +289,44 @@ In a crisis, correlations usually **spike to 1**. This is "Contagion": when ever
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
     # =====================================================================
-    # 3º SLIDE: PREDICTING THE UNPREDICTABLE
+    # 3º SLIDE: PREDICTING THE UNPREDICTABLE (CONTEÚDO ATUALIZADO - TEXTO FLUIDO)
     # =====================================================================
     html.Div([
-        # --- COLUNA ESQUERDA: Texto Explicativo ---
+        # --- COLUNA ESQUERDA: Texto com Insights ---
         html.Div([
-            html.H1("Predicting the Unpredictable?", 
-                   style={'color': '#3498db', 'fontSize': '3.5em','marginTop': '0px', 'marginBottom': '0px', 'textAlign': 'left', 'fontWeight': 'normal'}),
-            html.P("Even in volatile markets, Monte Carlo Simulation allows us to map the future.", 
-                   style={'color': '#bbb', 'fontSize': '1.8em', 'textAlign': 'left'}),
-            html.P("By projecting thousands of paths based on historical returns, we transform uncertainty into measurable probabilities.", 
-                   style={'color': '#888', 'fontSize': '1.2em', 'textAlign': 'left', 'marginTop': '20px'}),
+            html.H1("Predicting the Unpredictable", 
+                   style={'color': '#3498db', 'fontSize': '3.2em', 'marginTop': '0px', 'marginBottom': '10px', 'textAlign': 'left', 'fontWeight': 'normal'}),
+            
+            html.P("Looking at past data is useful, but the real question is: what could happen to my investment over the next month?", 
+                   style={'color': '#bbb', 'fontSize': '1.5em', 'textAlign': 'left', 'marginBottom': '20px'}),
+
+            html.P("To answer this, we run a Monte Carlo simulation. Think of it as generating thousands of parallel universes for this stock, based on how it has behaved historically. The chart on the right aggregates all these possible futures into a clear map.", 
+                   style={'color': '#888', 'fontSize': '1.1em', 'textAlign': 'left', 'marginBottom': '20px'}),
+
+            html.P("By checking the boxes below the chart, you can quickly understand your risk:", 
+                   style={'color': '#888', 'fontSize': '1.1em', 'textAlign': 'left', 'marginBottom': '15px'}),
+
+            # Secção de Insights Práticos (Estilo Fluido)
+            html.Div([
+                html.Div([
+                    html.B("The Worst-Case Scenario (Red Box): ", style={'color': '#e74c3c'}),
+                    "If the market crashes, this is a realistic estimate of the maximum drop you could face over the next 30 days."
+                ], style={'color': '#888', 'fontSize': '1.1em', 'marginBottom': '15px', 'textAlign': 'left'}),
+
+                html.Div([
+                    html.B("The Most Likely Outcome (Yellow Box): ", style={'color': '#f1c40f'}),
+                    "This is the average expected return. If the stock follows a normal path without major surprises, your return should be close to this number."
+                ], style={'color': '#888', 'fontSize': '1.1em', 'marginBottom': '15px', 'textAlign': 'left'}),
+
+                html.Div([
+                    html.B("The Best-Case Scenario (Green Box): ", style={'color': '#2ecc71'}),
+                    "If conditions are exceptionally favorable, this represents the ceiling of your potential gains."
+                ], style={'color': '#888', 'fontSize': '1.1em', 'textAlign': 'left'}),
+            ])
+            
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
 
-        # --- COLUNA DIREITA: Visualização da Simulação ---
+        # --- COLUNA DIREITA: Visualização (Mantém-se igual) ---
         html.Div([
             dcc.Graph(
                 id='intro-mc-sim', 
@@ -311,14 +335,13 @@ In a crisis, correlations usually **spike to 1**. This is "Contagion": when ever
                 style={'height': '450px', 'width': '100%'}
             ),
             
-            # --- CAIXAS DE ESTATÍSTICAS NOVAS ---
+            # Caixas de estatísticas
             html.Div(style={'width': '100%', 'padding': '15px 0', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-evenly'}, children=[
                 html.Div(dcc.Markdown(id='intro-stat-max', mathjax=True, style={'margin': 0}), style={'color': '#2ecc71', 'border': '1px solid #2ecc71', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(46, 204, 113, 0.05)', 'fontSize': '16px'}),
                 html.Div(dcc.Markdown(id='intro-stat-mean', mathjax=True, style={'margin': 0}), style={'color': '#f1c40f', 'border': '1px solid #f1c40f', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(241, 196, 15, 0.05)', 'fontSize': '16px'}),
                 html.Div(dcc.Markdown(id='intro-stat-min', mathjax=True, style={'margin': 0}), style={'color': '#e74c3c', 'border': '1px solid #e74c3c', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(231, 76, 60, 0.05)', 'fontSize': '16px'})
             ]),
 
-            # --- BOTÃO AZUL (MONTE CARLO) ---
             html.Button("SHOW INDIVIDUAL PATHS", id='mc-paths-btn', n_clicks=0, 
                         style={
                             'marginTop': '25px', 
