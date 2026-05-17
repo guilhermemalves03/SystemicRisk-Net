@@ -44,9 +44,17 @@ body, html {
 }
 
 /* Força a etiqueta E qualquer span dentro dela a ficarem roxos */
+/* Força a etiqueta a assumir o Azul da Dashboard quando selecionada */
+/* 1. Estilo da CAIXA do botão selecionado (fundo e borda) */
+.custom-radio label:has(input[type="radio"]:checked) {
+    border-color: #3498db !important; 
+    background-color: rgba(52, 152, 219, 0.15) !important; /* Preenche a caixa toda uniformemente */
+}
+
+/* 2. Estilo do TEXTO do botão selecionado (cor da letra e negrito) */
 .custom-radio label:has(input[type="radio"]:checked),
 .custom-radio label:has(input[type="radio"]:checked) * {
-    color: #b162ff !important;
+    color: #3498db !important;
     font-weight: bold !important;
 }
 
@@ -70,4 +78,28 @@ body, html {
     100% {
         box-shadow: 0 0 0 0px rgba(52, 152, 219, 0);
     }
+}
+
+.clicavel .js-plotly-plot .plotly .trace.scatter .point,
+.clicavel .js-plotly-plot .plotly .trace.scatter text {
+    cursor: pointer !important;
+}
+
+.js-plotly-plot .plotly .trace.scattergl .point,
+.js-plotly-plot .plotly .trace.scatter .point,
+.js-plotly-plot .plotly .trace.scatter text {
+    cursor: pointer !important;
+}
+
+[data-dash-is-loading="true"] {
+    cursor: wait !important;
+}
+
+/* Opcional: Se quiseres que a opacidade da zona do gráfico diminua ligeiramente 
+   para dar aquele efeito de "fundo desvanecido" enquanto atualiza */
+.clicavel[data-dash-is-loading="true"],
+#network-graph[data-dash-is-loading="true"],
+#contagion-map[data-dash-is-loading="true"] {
+    opacity: 0.6;
+    transition: opacity 0.2s ease-in-out;
 }

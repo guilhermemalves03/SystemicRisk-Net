@@ -759,31 +759,41 @@ The size of each peripheral node reflects its trading volume. Large bubbles indi
                     html.Div([
                         
                         # Barra superior com botões
+                        # Barra superior com botões alinhados numa única linha
                         html.Div([
                             dcc.RadioItems(
                                 id='map-vis-type',
                                 className='custom-radio',
                                 options=[
-                                    {'label': ' Δρ (Shock) ', 'value': 'delta'},
-                                    {'label': ' ρ (Stress) ', 'value': 'stress'},
-                                    {'label': ' ρ (Calm) ', 'value': 'calm'}
+                                    {'label': ' Δρ (Shock)', 'value': 'delta'},
+                                    {'label': ' ρ (Stress)', 'value': 'stress'},
+                                    {'label': ' ρ (Calm)', 'value': 'calm'}
                                 ],
-                                value='delta', inline=True, style={'color': 'white', 'marginRight': '30px', 'fontSize': '15px'},
-                                labelStyle={'color': 'white', 'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e'}
+                                value='delta', 
+                                inline=True, 
+                                # Força os botões a ficarem numa linha
+                                style={'display': 'flex', 'alignItems': 'center', 'color': 'white', 'marginRight': '30px'},
+                                # whiteSpace: 'nowrap' proíbe que o botão se parta ao meio
+                                labelStyle={'display': 'flex', 'alignItems': 'center', 'color': 'white', 'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e', 'fontFamily': '"EB Garamond", serif', 'fontStyle': 'italic', 'fontSize': '16px', 'whiteSpace': 'nowrap'}
                             ),
-                            html.Span("Pre-shock Calm Period: ", style={'color': 'white', 'fontSize': '14px', 'marginRight': '10px'}),
+                            
+                            html.Span("Pre-shock Calm Period: ", style={'color': 'white', 'fontSize': '14px', 'marginRight': '10px', 'fontFamily': 'sans-serif', 'whiteSpace': 'nowrap'}),
+                            
                             dcc.RadioItems(
                                 id='calm-period-selector',
                                 className='custom-radio',
                                 options=[
-                                    {'label': ' 1 Month ', 'value': '1M'},
-                                    {'label': ' 3 Months ', 'value': '3M'},
-                                    {'label': ' 1 Year ', 'value': '1Y'}
+                                    {'label': ' 1 Month', 'value': '1M'},
+                                    {'label': ' 3 Months', 'value': '3M'},
+                                    {'label': ' 1 Year', 'value': '1Y'}
                                 ],
-                                value='3M', inline=True, style={'color': 'white', 'fontSize': '15px'},
-                                labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e', 'color': 'white'}
+                                value='3M', 
+                                inline=True, 
+                                style={'display': 'flex', 'alignItems': 'center'},
+                                labelStyle={'display': 'flex', 'alignItems': 'center', 'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e', 'color': 'white', 'fontFamily': 'sans-serif', 'fontSize': '14px', 'whiteSpace': 'nowrap'}
                             )
-                        ], style={'padding': '5px 20px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'alignItems': 'center'}),
+                        # flexWrap: 'nowrap' proíbe a barra preta de atirar o segundo grupo para a linha de baixo
+                        ], style={'padding': '10px 20px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'flexDirection': 'row', 'alignItems': 'center', 'flexWrap': 'nowrap'}),
                         
                         # Contentor do Mapa
                         html.Div([
@@ -811,7 +821,7 @@ This Dorling cartogram maps geographic shock transmission, scaling countries by 
 
 **Portfolio Protection:**
 Check the **Safe Havens** sidebar. It automatically filters countries where the shock dropped ($\Delta\rho < 0$) *and* absolute stress correlation remained negative or zero ($\rho_{\text{stress}} \le 0$). Use these assets as your core structural diversifiers.
-                        """, style={'color': '#bbb', 'fontSize': '13.5px', 'lineHeight': '1.4'})
+                        """, mathjax=True, style={'color': '#bbb', 'fontSize': '13.5px', 'lineHeight': '1.4'})
                     ], style=dict(explanation_box_style, **{
                         'width': '300px',            
                         'minWidth': '300px', 

@@ -10,6 +10,13 @@ import textwrap
 import copy
 import dash
 
+def format_volume(v):
+    if v == 0: return "N/A"
+    if v >= 1e9: return f"{v/1e9:.2f}B"
+    if v >= 1e6: return f"{v/1e6:.2f}M"
+    if v >= 1e3: return f"{v/1e3:.2f}K"
+    return f"{v:,.0f}"
+
 LATEX_FONT = dict(family="EB Garamond, serif", size=16)
 
 def calculate_dorling_layout(lons, lats, radii, max_iter=300):
@@ -132,9 +139,18 @@ def register_callbacks(app, engine):
                     selected_date = extreme_days.index[-1].strftime('%Y-%m-%d')
 
             if selected_date:
-                fig.add_vline(x=selected_date, line_dash="dash", line_color="#39FF14", layer="below")
-                fig.add_annotation(x=selected_date, y=0.95, yref="paper", text="Stress Event", 
-                                   showarrow=False, xanchor="left", font=dict(color="#39FF14", size=14))
+                # Em vez de vline + annotation, adicionamos um Scatter invisível 
+                # apenas para gerar uma entrada limpa e nativa na legenda
+                fig.add_trace(go.Scatter(
+                    x=[selected_date, selected_date],
+                    # Usa os limites do teu eixo Y para desenhar a linha vertical
+                    y=[vol_data_country.min() * 0.5, vol_data_country.max() * 1.5],
+                    mode='lines',
+                    name='Stress Event',
+                    line=dict(color='#39FF14', width=2, dash='dash'),
+                    showlegend=True,
+                    hoverinfo='skip'
+                ))
 
             clean_title = f"Volatility: {nome_clicado} vs {nome_principal}"
 
@@ -147,18 +163,36 @@ def register_callbacks(app, engine):
                 font=LATEX_FONT, 
                 hovermode='x unified', 
                 hoverlabel=dict(bgcolor="rgba(17, 17, 17, 0.95)", font_color="white", bordercolor="rgba(255, 255, 255, 0.1)"),
-                xaxis=dict(showgrid=False, zeroline=False, showspikes=True, spikecolor="#f1c40f", spikethickness=1, spikedash="dash", spikemode="across"),
-                yaxis=dict(tickformat='.2%', showgrid=False, zeroline=False),
+                # Ativação das grelhas de fundo (subtis)
+                xaxis=dict(
+                    showgrid=True, 
+                    gridcolor='rgba(255, 255, 255, 0.05)', # Cinza muito escuro e suave
+                    zeroline=False, 
+                    showspikes=True, 
+                    spikecolor="#f1c40f", 
+                    spikethickness=1, 
+                    spikedash="dash", 
+                    spikemode="across"
+                ),
+                yaxis=dict(
+                    tickformat='.2%', 
+                    showgrid=True, 
+                    gridcolor='rgba(255, 255, 255, 0.05)', # Alinhado com o eixo X
+                    zeroline=False,
+                    # Tranca o range vertical para a linha do Stress Event não esticar o gráfico
+                    range=[max(0, min(vol_data_country.min(), vol_data_main.min() if vol_data_main is not None else 0) * 0.8), 
+                           max(vol_data_country.max(), vol_data_main.max() if vol_data_main is not None else 0) * 1.1]
+                ),
                 legend=dict(
-    orientation="v",           
-    yanchor="top",             
-    y=0.98,                    
-    xanchor="right",           
-    x=0.98,                    
-    bgcolor="rgba(17, 17, 17, 1)",          # <-- CORREÇÃO: Fundo totalmente opaco (cor do modal)
-    bordercolor="rgba(255, 255, 255, 0.2)", # <-- Bónus: Uma borda fina para destacar do gráfico
-    borderwidth=1
-)
+                    orientation="v",           
+                    yanchor="top",             
+                    y=0.98,                    
+                    xanchor="right",           
+                    x=0.98,                    
+                    bgcolor="rgba(17, 17, 17, 1)",          
+                    bordercolor="rgba(255, 255, 255, 0.2)", 
+                    borderwidth=1
+                )
             )
             
             modal_style['display'] = 'block'
@@ -237,17 +271,28 @@ def register_callbacks(app, engine):
         x_range = np.linspace(filtered_returns.min(), filtered_returns.max(), 250)
         
         # --- APLICADO O HOVERTEMPLATE NAS LINHAS ---
-        fig_dist_main.add_trace(go.Scatter(x=x_range, y=gaussian_kde(filtered_returns)(x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5),
-                                           hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>KDE</extra>'))
-        fig_dist_main.add_trace(go.Scatter(x=x_range, y=norm.pdf(x_range, filtered_returns.mean(), filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5),
-                                           hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Gaussian</extra>'))
+        fig_dist_main.add_trace(go.Scatter(
+            x=x_range, y=gaussian_kde(filtered_returns)(x_range), 
+            name='Realized Risk Profile', # <-- MUDADO AQUI
+            line=dict(color='#3498db', width=2.5),
+            hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Realized Risk</extra>'
+        ))
+        
+        # --- Alterar Gaussian para algo mais simples ---
+        fig_dist_main.add_trace(go.Scatter(
+            x=x_range, y=norm.pdf(x_range, filtered_returns.mean(), filtered_returns.std()), 
+            name='Theoretical Baseline', # <-- MUDADO AQUI
+            line=dict(color='#777', dash='dash', width=1.5),
+            hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Baseline</extra>'
+        ))
         
         fig_dist_main.add_vline(x=var_limit, line_dash="dash", line_color="#e74c3c")
         fig_dist_main.add_annotation(x=var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
         fig_dist_main.update_layout(
             title=rf"$\text{{Aggregated Return Distribution}}$", font=LATEX_FONT, 
             template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
-            margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$",
+            margin=dict(l=40, r=20, t=50, b=10), 
+            xaxis_title=r"$\Delta \ln(P_t)$ - Difference of Prices (Scaled)", # <-- MUDAR AQUI
             xaxis=dict(tickformat='.0%')
         )
 
@@ -266,10 +311,13 @@ def register_callbacks(app, engine):
                 fig_ridge.add_annotation(x=m_ret, y=month_label, text=f"μ: {m_ret*100:.2f}%", showarrow=False, yshift=18, bgcolor="rgba(0,0,0,0.7)", bordercolor=colors[i], font=dict(color="white", size=11, family="sans-serif"))
         
         fig_ridge.update_layout(
-            title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", xaxis_title=r"$\Delta \ln(P_t)$", font=LATEX_FONT, 
+            title=rf"$\text{{Ridgeline Plot (Last 12 Months)}}$", 
+            xaxis_title=r"$\Delta \ln(P_t)$ - Difference of Prices (Scaled)", # <-- MUDAR AQUI
+            font=LATEX_FONT, 
             template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
             margin=dict(l=10, r=20, t=30, b=40), violingap=0, violingroupgap=0, violinmode='overlay',
-            xaxis=dict(tickformat='.0%')
+            xaxis=dict(tickformat='.0%'),
+            yaxis=dict(showgrid=True, gridcolor='rgba(255, 255, 255, 0.15)', griddash='dash', zeroline=False)
         )
 
         list_items = [html.Div([
@@ -299,10 +347,19 @@ def register_callbacks(app, engine):
         i_x_range = np.linspace(i_filtered_returns.min(), i_filtered_returns.max(), 250)
         
         # --- APLICADO O HOVERTEMPLATE NAS LINHAS (STORY MODE) ---
-        fig_dist_intro.add_trace(go.Scatter(x=i_x_range, y=gaussian_kde(i_filtered_returns)(i_x_range), name=r'$\text{KDE}$', line=dict(color='#3498db', width=2.5),
-                                            hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>KDE</extra>'))
-        fig_dist_intro.add_trace(go.Scatter(x=i_x_range, y=norm.pdf(i_x_range, i_filtered_returns.mean(), i_filtered_returns.std()), name=r'$\text{Gaussian}$', line=dict(color='#777', dash='dash', width=1.5),
-                                            hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Gaussian</extra>'))
+        fig_dist_intro.add_trace(go.Scatter(
+            x=i_x_range, y=gaussian_kde(i_filtered_returns)(i_x_range), 
+            name='Realized Risk Profile', # <-- MUDADO AQUI
+            line=dict(color='#3498db', width=2.5),
+            hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Realized Risk</extra>'
+        ))
+        
+        fig_dist_intro.add_trace(go.Scatter(
+            x=i_x_range, y=norm.pdf(i_x_range, i_filtered_returns.mean(), i_filtered_returns.std()), 
+            name='Theoretical Baseline', # <-- MUDADO AQUI
+            line=dict(color='#777', dash='dash', width=1.5),
+            hovertemplate='Return: %{x:.2%}<br>Density: %{y:.4f}<extra>Baseline</extra>'
+        ))
         
         fig_dist_intro.add_vline(x=i_var_limit, line_dash="dash", line_color="#e74c3c")
         fig_dist_intro.add_annotation(x=i_var_limit, y=0.95, yref="paper", text=rf"$VaR_{{99\%}} = {i_var_limit*100:.2f}\%$", showarrow=False, font=dict(color="#e74c3c", size=16), bgcolor="rgba(0,0,0,0.5)")
@@ -314,7 +371,8 @@ def register_callbacks(app, engine):
         fig_dist_intro.update_layout(
             title=rf"$\text{{Aggregated Return Distribution: AAPL}}$", font=LATEX_FONT, 
             template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', 
-            margin=dict(l=40, r=20, t=50, b=10), xaxis_title=r"$\Delta \ln(P_t)$",
+            margin=dict(l=40, r=20, t=50, b=10), 
+            xaxis_title=r"$\Delta \ln(P_t)$ - Difference of Prices (Scaled)", # <-- MUDAR AQUI
             xaxis=dict(
                 tickformat='.0%',
                 range=[orig_min - pad, orig_max + pad], 
@@ -785,7 +843,7 @@ def register_callbacks(app, engine):
         ))
         
         # --- CORREÇÃO AQUI: Margens ajustadas (b=80, t=60) para a barra de cor ter espaço e não ficar cortada ---
-        fig_map.update_layout(title=f"Systemic Risk Cartogram: {formatted_date}", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=60, b=80))
+        fig_map.update_layout(title=f"Systemic Risk Cartogram: {formatted_date} <span style='font-size: 13px; color: #aaa;'>(Click a country to view volatility comparison)</span> ", font=LATEX_FONT, template="plotly_dark", xaxis=dict(visible=False, scaleanchor="y", scaleratio=1), yaxis=dict(visible=False), plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0, r=0, t=60, b=80))
 
         safe_havens = sorted([row for row in map_rows if row['Delta'] < 0 and row['Stress'] <= 0], key=lambda x: x['Stress'])
         
@@ -1248,12 +1306,11 @@ def register_callbacks(app, engine):
                 
                 edge_width = 1 + (abs(node['rho']) ** 2.5) * 20
                 
-                # --- CALCULAR O TAMANHO E O TEXTO DO VOLUME ---
+                # --- CALCULAR O TAMANHO E O TEXTO DO VOLUME --- 
                 vol = node.get('volume', 0.0)
                 node_sizes.append(get_size(vol))
-                vol_text = f"{vol:,.0f}" if vol > 0 else "N/A"
-                
-                hover_texts.append(f"Ticker: {node['ticker']}<br>Força (ρ): {node['rho']:.2f}<br>Salto (Δρ): {delta_val:.2f}<br>Volume: {vol_text}")
+                vol_text = format_volume(vol)
+                hover_texts.append(f"Ticker: {node['ticker']}<br>Correlation (ρ): {node['rho']:.2f}<br>Shock (Δρ): {delta_val:.2f}<br>Volume: {vol_text}")
                 custom_data.append(node['ticker']) 
                 
                 # --- LÓGICA DO PRIMEIRO CLIQUE (DESTAQUE VISUAL) ---
@@ -1308,7 +1365,7 @@ def register_callbacks(app, engine):
 
         # --- UPDATE LAYOUT COM AUTO-SCALE DINÂMICO ---
         fig.update_layout(
-            title=f"Contagion Network - {target_date}",
+            title=f"Contagion Network - {target_date}  <span style='font-size: 13px; color: #aaa;'>(Click a node to center the asset)</span>",
             font=LATEX_FONT, 
             template="plotly_dark",
             # Substituímos os ranges fixos [-1.9, 1.9] por autorange=True
