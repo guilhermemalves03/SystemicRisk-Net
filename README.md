@@ -1,6 +1,6 @@
 # SystemicRisk-Net 
 
-An institutional-grade quantitative risk management terminal and interactive data visualization platform designed to diagnose cross-border asset contagion, evaluate portfolio vulnerabilities, and isolate structural safe havens during black-swan liquidations.
+An academic quantitative risk management terminal and interactive data visualization platform designed to diagnose cross-border asset contagion, evaluate portfolio vulnerabilities, and isolate structural safe havens during black-swan liquidations.
 
 Built using **Python**, **Dash**, and **Plotly**, the architecture decouples a high-performance vector calculations backend from a reactive, modern visual interface executing purely in dark mode.
 
