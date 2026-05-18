@@ -25,7 +25,7 @@ class SystemicRiskEngine:
             
         self.prices = self.prices.ffill()
         
-        # Corrigido: removido o código duplicado que estava aqui no final
+       
         self.returns = np.log(self.prices / self.prices.shift(1)).dropna(how='all')
         return self.returns
 
@@ -34,7 +34,7 @@ class SystemicRiskEngine:
         empresas_df = self.assets_df[~self.assets_df['sector'].isin(['Country', 'Index', 'ETF'])]
         valid_tickers = empresas_df['ticker'].tolist()
 
-        # MUDANÇA 1: Apanhar TAMBÉM as correlações do período calmo (calm_corrs)
+        
         stress_corrs, calm_corrs = self.get_bulk_contagion(target_date, '1M')
         if stress_corrs is None or calm_corrs is None: return [], []
 
@@ -43,14 +43,14 @@ class SystemicRiskEngine:
                 continue
             
             stress_rho = stress_corrs[ticker]
-            # MUDANÇA 2: Apanhar o valor calmo para podermos fazer a subtração
+           
             calm_rho = calm_corrs[ticker] if ticker in calm_corrs else 0.0
             
             if not pd.isna(stress_rho):
                 name_match = self.assets_df[self.assets_df['ticker'] == ticker]['name'].values
                 name = name_match[0] if len(name_match) > 0 else ticker
                 
-                # --- LÓGICA DE VOLUME (Mantém-se igual e segura) ---
+                
                 vol = 0.0
                 if self.volume is not None and ticker in self.volume.columns:
                     try:
@@ -67,10 +67,10 @@ class SystemicRiskEngine:
                     except:
                         vol = 0.0 
                 
-                # MUDANÇA 3: Calcular finalmente o Delta Rho (Salto)
+                
                 delta_rho = stress_rho - calm_rho if not pd.isna(calm_rho) else stress_rho
                     
-                # MUDANÇA 4: Adicionar o 'delta' ao dicionário que é enviado para os Callbacks
+                
                 correlations.append({'ticker': ticker, 'name': name, 'rho': stress_rho, 'delta': delta_rho, 'volume': vol})
         
         df = pd.DataFrame(correlations).sort_values('rho', ascending=False)
@@ -145,7 +145,6 @@ class SystemicRiskEngine:
         return (stress_corr - calm_corr, stress_corr, calm_corr), (delta_vol, stress_vol_other, calm_vol_other)
 
     def get_bulk_contagion(self, target_date, calm_period='3M'):
-        """Calcula as correlações para todos os ativos de uma só vez (Vetorizado)."""
         if self.main_returns is None: return None, None
         
         stress_date = pd.to_datetime(target_date)
@@ -161,14 +160,14 @@ class SystemicRiskEngine:
         end_calm = max(0, start_stress - 1)
         start_calm = max(0, end_calm - calm_days)
         
-        # Fatiamos o dataframe de TODAS as colunas ao mesmo tempo
+        
         stress_df = self.returns.iloc[start_stress:end_stress+1]
         calm_df = self.returns.iloc[start_calm:end_calm+1]
         
         if len(stress_df) < 3 or len(calm_df) < 3: 
             return None, None
             
-        # O SUPER TRUQUE: corrwith() faz a matemática toda num milissegundo
+        
         stress_corrs = stress_df.corrwith(self.main_returns.iloc[start_stress:end_stress+1])
         calm_corrs = calm_df.corrwith(self.main_returns.iloc[start_calm:end_calm+1])
         

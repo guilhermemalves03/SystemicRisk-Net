@@ -20,9 +20,7 @@ COUNTRY_COORDS = {
     'Kenya': [-1.3, 36.8], 'Morocco': [31.8, -7.1]
 }
 
-# =====================================================================
-# ESTILOS
-# =====================================================================
+
 
 explanation_box_style = {
     'width': '450px', 
@@ -40,22 +38,22 @@ explanation_box_style = {
     'boxShadow': '0 4px 15px rgba(0,0,0,0.3)'
 }
 
-# Ajustado para calc(100vh - 60px) para não criar barra de scroll dupla por causa das abas
+
 story_style = {
     'height': 'calc(100vh - 50px)', 
     'display': 'flex', 
     'flexDirection': 'column', 
     'justifyContent': 'center', 
     'alignItems': 'center',
-    'padding': '0 5%', # Removido o valor negativo
+    'padding': '0 5%', 
     'textAlign': 'center',
-    'scrollSnapAlign': 'start', # Íman que cola ao topo
+    'scrollSnapAlign': 'start', 
     'borderBottom': '1px solid #111',
     'position': 'relative',
     'boxSizing': 'border-box'
 }
 
-# --- ESTILOS DAS ABAS PRINCIPAIS ---
+
 tabs_styles = {
     'height': '60px',
     'backgroundColor': '#000',
@@ -87,15 +85,10 @@ tab_selected_style = {
     'letterSpacing': '1px'
 }
 
-# =====================================================================
-# STORY SECTIONS (A Div pai agora controla o scroll)
-# =====================================================================
 
 story_sections = html.Div([
     
-    # =====================================================================
-    # 1º SLIDE: TÍTULO INICIAL (SEM BOTÃO CTA)
-    # =====================================================================
+    
     html.Div([
         html.Img(
             src='/assets/titulo_3d.png', 
@@ -121,7 +114,7 @@ story_sections = html.Div([
             }
         ),
         
-        # --- NOVO INDICADOR DE NAVEGAÇÃO (Substitui o botão) ---
+       
         html.Div([
             html.Span("↑ ", style={'fontSize': '1.3em', 'fontWeight': 'bold'}),
             html.Span("Select 'Main Dashboard' in the top menu for immediate access")
@@ -155,17 +148,15 @@ story_sections = html.Div([
         )
     ], style=story_style),
 
-    # =====================================================================
-    # NOVO SLIDE: THE MATHEMATICAL FOUNDATION (Educação)
-    # =====================================================================
+
     html.Div([
         html.H1("The Foundations of Risk", 
                 style={'color': '#d4af37', 'fontSize': '3.2em', 'marginBottom': '40px', 'fontWeight': 'normal'}),
         
-        # Container de 3 Colunas (Tiles)
+        
         html.Div([
             
-            # --- CAIXA 1: DAILY RETURNS ---
+            
             html.Div([
                 html.Div(html.I(className="fa-solid fa-chart-line"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
                 html.H3("1. Daily Returns", style={'color': '#fff', 'marginBottom': '15px'}),
@@ -179,12 +170,12 @@ $$r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)$$
 * $P_t$: Price **Today**
 * $P_{t-1}$: Price **Yesterday**
 
-*Why this tool?* Think of it as a **scale equalizer**. It translates raw price changes into a standardized format, allowing us to easily visualize and compare a 150 stock alongside a 3,000 stock without visual distortion.
+*Why this tool?* It translates raw price changes into a standardized format, allowing us to easily visualize and compare a 150 stock alongside a 3,000 stock without visual distortion.
                 """, mathjax=True, style={'color': '#bbb', 'fontSize': '1.1em'})
             ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'}),
 
 
-            # --- CAIXA 2: DISTRIBUTIONS ---
+            
             html.Div([
                 html.Div(html.I(className="fa-solid fa-chart-area"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
                 html.H3("2. Distributions", style={'color': '#fff', 'marginBottom': '15px'}),
@@ -202,7 +193,7 @@ We organize them into a **Probability Curve**:
             ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'}),
 
 
-            # --- CAIXA 3: CORRELATION ---
+            
             html.Div([
                 html.Div(html.I(className="fa-solid fa-link"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
                 html.H3("3. Correlation", style={'color': '#fff', 'marginBottom': '15px'}),
@@ -226,15 +217,13 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
         html.Div("↓", style={'color': '#d4af37', 'position': 'absolute', 'bottom': '30px', 'fontSize': '2em'})
     ], style=story_style),
     
-    # =====================================================================
-    # 2º SLIDE: WHAT IS AN EXTREME EVENT?
-    # =====================================================================
+    
     html.Div([
-        # Coluna Esquerda: Gráfico
+        
         html.Div([
             dcc.Graph(id='intro-apple-dist', config={'displayModeBar': False},mathjax=True, style={'height': '550px', 'width': '100%'}),
             
-            # --- BOTÃO VERMELHO (ZOOM) ---
+            
             html.Button("ZOOM: LEFT TAIL", id='zoom-btn-intro', n_clicks=0, 
                 style={
                     'marginTop': '20px', 
@@ -252,7 +241,7 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
                 })
         ], style={'flex': '1', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
         
-        # Coluna Direita: Texto e Eventos
+        
         html.Div([
             html.H1("What is an Extreme Event?", style={'color': '#e74c3c', 'fontSize': '3.5em','marginTop': '0px', 'marginBottom': '15px', 'textAlign': 'left'}),
             html.P("In simple terms, an extreme event is a sharp, sudden drop in a stock's price from one day to the next. In statistical terms, we visualize these severe losses in the far left tail of the return distribution.", style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),
@@ -277,7 +266,7 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
                     html.Span("-3.51%", style={'color': '#e74c3c', 'fontWeight': 'bold', 'display': 'inline-block', 'width': '80px'}),
                     html.Span("Tariffs on China", style={'color': '#fff'}),
                     
-                    # --- BOTÃO VERDE (CASE STUDY) ---
+                    
                     html.Button("Highlight Case Study", id='focus-example-btn', n_clicks=0, 
                                 style={
                                     'backgroundColor': '#39FF14', 
@@ -300,11 +289,9 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
         html.Div("↓", style={'color': '#e74c3c','position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
-    # =====================================================================
-    # 3º SLIDE: PREDICTING THE UNPREDICTABLE (CONTEÚDO ATUALIZADO - TEXTO FLUIDO)
-    # =====================================================================
+    
     html.Div([
-        # --- COLUNA ESQUERDA: Texto com Insights ---
+        
         html.Div([
             html.H1("Predicting the Unpredictable", 
                    style={'color': '#3498db', 'fontSize': '3.2em', 'marginTop': '0px', 'marginBottom': '10px', 'textAlign': 'left', 'fontWeight': 'normal'}),
@@ -318,7 +305,7 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
             html.P("By checking the boxes below the chart, you can quickly understand your risk:", 
                    style={'color': '#888', 'fontSize': '1.1em', 'textAlign': 'left', 'marginBottom': '15px'}),
 
-            # Secção de Insights Práticos (Estilo Fluido)
+           
             html.Div([
                 html.Div([
                     html.B("The Worst-Case Scenario (Red Box): ", style={'color': '#e74c3c'}),
@@ -338,7 +325,7 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
             
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
 
-        # --- COLUNA DIREITA: Visualização (Mantém-se igual) ---
+        
         html.Div([
             dcc.Graph(
                 id='intro-mc-sim', 
@@ -347,7 +334,7 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
                 style={'height': '450px', 'width': '100%'}
             ),
             
-            # Caixas de estatísticas
+            
             html.Div(style={'width': '100%', 'padding': '15px 0', 'display': 'flex', 'alignItems': 'center', 'justifyContent': 'space-evenly'}, children=[
                 html.Div(dcc.Markdown(id='intro-stat-max', mathjax=True, style={'margin': 0}), style={'color': '#2ecc71', 'border': '1px solid #2ecc71', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(46, 204, 113, 0.05)', 'fontSize': '16px'}),
                 html.Div(dcc.Markdown(id='intro-stat-mean', mathjax=True, style={'margin': 0}), style={'color': '#f1c40f', 'border': '1px solid #f1c40f', 'padding': '10px 20px', 'borderRadius': '10px', 'backgroundColor': 'rgba(241, 196, 15, 0.05)', 'fontSize': '16px'}),
@@ -373,11 +360,9 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
         html.Div("↓", style={'color': '#3498db','position': 'absolute', 'bottom': '30px', 'fontSize': '2em',  'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
-    # =====================================================================
-    # 4º SLIDE: GRAFO DA REDE DE CONTÁGIO (Network)
-    # =====================================================================
+    
     html.Div([
-        # --- COLUNA ESQUERDA: Texto + Legenda ---
+        
         html.Div([
             html.H1(
                 "Mapping the Contagion Network",
@@ -409,33 +394,33 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
                        'marginBottom': '0px'
                    }),
 
-            # Legenda Explicativa
+            
             html.Div([
-                # Linha 1: Top (Red)
+                
                 html.Div([
                     html.Span("●", style={'color': '#e74c3c', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.5em', 'textAlign': 'center'}),
                     html.Span([html.B("Top (Red): "), "Systemic Risk. Assets that crash alongside the main asset."])
                 ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '12px'}),
                 
-                # Linha 2: Bottom (Green)
+                
                 html.Div([
                     html.Span("●", style={'color': '#2ecc71', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.5em', 'textAlign': 'center'}),
                     html.Span([html.B("Bottom (Green): "), "Safe Havens. Assets that protect the portfolio."])
                 ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '12px'}),
                 
-                # Linha 3: Line Thickness
+                
                 html.Div([
                     html.Span("━", style={'color': '#fff', 'width': '35px', 'display': 'inline-block', 'fontWeight': 'bold', 'textAlign': 'center', 'fontSize': '1.2em'}),
                     html.Span([html.B("Line Thickness: "), "Absolute strength of the stress correlation (ρ)."])
                 ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '12px'}),
 
-                # Linha 4: Distance
+                
                 html.Div([
                     html.Span("↔", style={'color': '#3498db', 'width': '35px', 'display': 'inline-block', 'fontWeight': 'bold', 'textAlign': 'center', 'fontSize': '1.5em'}),
                     html.Span([html.B("Distance: "), "Shock (Δρ). Closer nodes suffered a sudden jump in correlation."])
                 ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '12px'}),
 
-                # Linha 5: Volume
+                
                 html.Div([
                     html.Span("⬤", style={'color': '#fff', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.3em', 'textAlign': 'center'}),
                     html.Span([html.B("Bubble Size: "), "Trading Volume. Larger nodes represent heavily traded."])
@@ -455,7 +440,7 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
             })
         ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
 
-        # --- COLUNA DIREITA: Gráfico do Grafo + Botão ---
+        
         html.Div([
             dcc.Graph(
                 id='intro-network-graph', 
@@ -464,7 +449,7 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
                 style={'height': '650px', 'width': '100%'}
             ),
             
-            # --- BOTÃO AMARELO (NETWORK) ---
+            
             html.Button("HIGHLIGHT SAFE HAVENS", id='network-highlight-btn', n_clicks=0, 
                         style={
                             'marginTop': '10px', 
@@ -484,11 +469,9 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
         html.Div("↓", style={'color': '#f1c40f','position': 'absolute', 'bottom': '30px', 'fontSize': '2em', 'left': '50%', 'transform': 'translateX(-50%)'})
     ], style=dict(story_style, **{'flexDirection': 'row-reverse', 'alignItems': 'stretch', 'padding': '0 5%'})),
 
-    # =====================================================================
-    # 5º SLIDE: MAPA (How can we understand...)
-    # =====================================================================
+    
     html.Div([
-        # --- COLUNA ESQUERDA: Texto + Tabela de Impacto ---
+        
         html.Div([
             html.H1(
                 "How can we understand the nature of these events?",
@@ -509,13 +492,13 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
             
         ], style={
             'width': '50%', 
-            'padding': '50px 40px 40px 40px', # <-- AUMENTAMOS O PADDING NO TOPO (100px)
+            'padding': '50px 40px 40px 40px', 
             'display': 'flex', 
             'flexDirection': 'column', 
-            'justifyContent': 'flex-start'     # <-- MUDÁMOS DE 'center' PARA 'flex-start'
+            'justifyContent': 'flex-start'     
         }),
 
-        # --- COLUNA DIREITA: Mapa + Botão Zoom ---
+        
         html.Div([
             dcc.Graph(
                 id='intro-contagion-map', 
@@ -524,7 +507,7 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
                 style={'height': '500px', 'width': '100%'}
             ),
             
-            # --- BOTÃO VERDE ESCURO (MAPA) ---
+            
             html.Button("ZOOM: ASIA FOCUS", id='zoom-asia-btn', n_clicks=0, 
                         style={
                             'marginTop': '20px', 
@@ -541,18 +524,18 @@ It runs on a strict mathematical scale ($\rho$) from -1 to 1:
                         })
         ], style={
             'width': '50%', 
-            'padding': '50px 40px 40px 40px', # <-- AUMENTAMOS O PADDING NO TOPO (100px)
+            'padding': '50px 40px 40px 40px', 
             'display': 'flex', 
             'flexDirection': 'column', 
             'alignItems': 'center', 
-            'justifyContent': 'flex-start'     # <-- MUDÁMOS DE 'center' PARA 'flex-start'
+            'justifyContent': 'flex-start'     
         }),
         
-        # --- MENSAGEM FINAL NO LUGAR DA SETA ---
+        
         html.Div("READY? SELECT 'MAIN DASHBOARD'", 
                  style={
                      'position': 'absolute', 
-                     'bottom': '30px',            # <-- Subi ligeiramente o botão de 30px para 50px
+                     'bottom': '30px',            
                      'left': '50%', 
                      'transform': 'translateX(-50%)',
                      'fontSize': '1.1em', 
@@ -578,7 +561,7 @@ def get_layout(engine):
     options = [{'label': f"{r['name']} ({r['ticker']})", 'value': r['ticker']} 
                for _, r in engine.assets_df[engine.assets_df['sector'] != 'Country'].iterrows()]
 
-    # 1. Os Stores invisíveis devem estar na base do layout (fora das abas)
+    
     stores_and_modals = html.Div([
         dcc.Store(id='mc-paths-store'),
         dcc.Store(id='intro-mc-paths-store'),
@@ -587,7 +570,7 @@ def get_layout(engine):
         dcc.Store(id='selected-stress-date', data=None),
         dcc.Interval(id='animation-interval', interval=100, n_intervals=0, disabled=True),
         
-        # Modal
+        
         html.Div(id='volatility-modal', style={'display': 'none', 'position': 'fixed', 'zIndex': '1000', 'left': '0', 'top': '0', 'width': '100%', 'height': '100%', 'backgroundColor': 'rgba(0,0,0,0.8)'}, children=[
             html.Div(style={'position': 'relative', 'margin': '10% auto', 'padding': '20px', 'width': '60%', 'backgroundColor': '#111', 'borderRadius': '10px', 'border': '1px solid #333'}, children=[
                 html.Button('✖', id='close-modal-btn', style={'position': 'absolute', 'right': '15px', 'top': '15px', 'backgroundColor': 'transparent', 'color': '#e74c3c', 'border': 'none', 'fontSize': '20px', 'cursor': 'pointer', 'zIndex': '10'}),
@@ -596,25 +579,25 @@ def get_layout(engine):
         ])
     ])
 
-    # 2. O conteúdo da Dashboard Principal 
+    
     dashboard_content = html.Div([
         html.Div([
-                # 1. LADO ESQUERDO: A Dropdown (com uma largura fixa para não encolher)
+                
                 html.Div([
                     dcc.Dropdown(
                         id='main-asset-dropdown',
                         options=options,
                         value='AAPL',
                         clearable=False,
-                        className='', # Começa sem classe de animação
+                        className='', 
                         style={'color': '#000'}
 )
-                ], style={'width': '300px', 'marginLeft': '20px'}), # Ajusta o 'width' conforme precisares
+                ], style={'width': '300px', 'marginLeft': '20px'}), 
 
-                # 2. LADO DIREITO: O Título da Dashboard
+                
                 html.Div([
                     dcc.Markdown(
-                        r"# $\text{SYSTEMIC RISK-NET}$",  # O '#' faz com que o Markdown o trate como um H1
+                        r"# $\text{SYSTEMIC RISK-NET}$",  
                         mathjax=True,
                         className="meu-titulo-latex",
                         style={
@@ -628,10 +611,10 @@ def get_layout(engine):
 
             ], style={
                 'display': 'flex', 
-                'justifyContent': 'space-between', # <--- A MAGIA ACONTECE AQUI
-                'alignItems': 'center',            # Centra tudo verticalmente
+                'justifyContent': 'space-between', 
+                'alignItems': 'center',            
                 'padding': '8px 0', 
-                'backgroundColor': '#111111',      # Fundo escuro do cabeçalho
+                'backgroundColor': '#111111',      
                 'borderBottom': '1px solid #333'
             }),
 
@@ -645,35 +628,35 @@ def get_layout(engine):
                         ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
                         
                         html.Div([
-                            # CAIXA FORTE DOS GRÁFICOS (Garante que a altura não muda e o botão não salta)
+                            
                             html.Div([
-                                # CAIXA 1: Distribution Graph
+                                
                                 html.Div([
                                     dcc.Graph(id='distribution-graph', style={'height': '550px', 'width': '100%'}, mathjax=True, config={'displayModeBar': False})
                                 ], id='container-distribution', style={'display': 'flex', 'flexDirection': 'column', 'width': '100%', 'height': '100%'}),
                                 
-                                # CAIXA 2: Ridgeline Graph
+                                
                                 html.Div([
                                     dcc.Graph(id='ridgeline-graph', style={'height': '550px', 'width': '100%'}, mathjax=True, config={'displayModeBar': False})
                                 ], id='container-ridgeline', style={'display': 'none', 'flexDirection': 'column', 'width': '100%', 'height': '100%'}),
-                            ], style={'height': '550px', 'width': '100%'}), # <--- O segredo está aqui: altura trancada!
+                            ], style={'height': '550px', 'width': '100%'}), 
 
-                            # O BOTÃO DE ALTERNÂNCIA (Agora imune aos saltos)
+                            
                             html.Button(
                                 "SHOW MONTHLY DISTRIBUTION PLOT", 
                                 id='toggle-risk-graphs-btn', 
                                 n_clicks=0, 
                                 style={
                                     'marginTop': '25px', 
-                                    'backgroundColor': '#f1c40f',  # <-- Fundo amarelo sólido
-                                    'color': '#ffffff',            # <-- Letras a branco
-                                    'border': 'none',              # <-- Sem borda
-                                    'padding': '12px 25px',        # <-- Tamanho padrão do Story Mode
+                                    'backgroundColor': '#f1c40f',  
+                                    'color': '#ffffff',            
+                                    'border': 'none',              
+                                    'padding': '12px 25px',        
                                     'cursor': 'pointer', 
                                     'fontSize': '14px',
                                     'fontWeight': 'bold',
-                                    'borderRadius': '8px',         # <-- Cantos mais redondos
-                                    'boxShadow': '0 4px 10px rgba(241, 196, 15, 0.4)', # <-- Brilho amarelo
+                                    'borderRadius': '8px',         
+                                    'boxShadow': '0 4px 10px rgba(241, 196, 15, 0.4)', 
                                     'transition': '0.3s',
                                     'alignSelf': 'center'             
                                 }
@@ -745,17 +728,17 @@ Compare the final stats below the chart. If the potential minimum loss (Min) dra
 
             dcc.Tab(label='Market Connections', value='tab-network', children=[
                 html.Div([
-                    # MEMÓRIA INVISÍVEL
+                    
                     dcc.Store(id='selected-network-date', data=None),
                     dcc.Store(id='node-click-memory', data=None),
                     
-                    # --- 1. CAIXA ESQUERDA (Stress Events) ---
+                    
                     html.Div([
                         html.H3("STRESS EVENTS (Click)", style={'fontSize': '20px', 'color': '#e74c3c', 'marginBottom': '10px'}),
                         html.Div(id='extreme-dates-list-network', style={'fontSize': '18px', 'maxHeight': '800px', 'overflowY': 'auto', 'paddingRight': '5px'})
                     ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a', 'height': '100%', 'boxSizing': 'border-box'}),
                     
-                    # --- 2. CAIXA CENTRAL (O Grafo) ---
+                    
                     html.Div([
                         dcc.Graph(
                             id='network-graph', 
@@ -765,7 +748,7 @@ Compare the final stats below the chart. If the potential minimum loss (Min) dra
                         )
                     ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'height': '100%'}),
                     
-                    # --- 3. CAIXA DIREITA (Metodologia) ---
+                    
                     html.Div([
                         html.H3("CONTAGION TOPOLOGY ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
                         dcc.Markdown(r"""
@@ -783,10 +766,10 @@ Assets in the lower section move independently or in opposite directions during 
 The size of each peripheral node reflects its trading volume. Large bubbles indicate heavy market capitalization and institutional liquidity, showing you whether your portfolio shields or risk threats are major market players or smaller assets.
                         """,mathjax=True, style={'color': '#bbb', 'fontSize': '15px', 'lineHeight': '1.6'})
                         
-                    # O SEGREDO 1: Obrigar a caixa direita a ter 100% de altura
+                    
                     ], style=dict(explanation_box_style, **{'height': '100%', 'overflowY': 'auto'})), 
                     
-                # O SEGREDO 2: Adicionar padding: 15px na Div principal (igual à tab do Monte Carlo)
+                
                 ], style={'display': 'flex', 'height': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box'})
                 
             ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
@@ -794,10 +777,10 @@ The size of each peripheral node reflects its trading volume. Large bubbles indi
                            
             dcc.Tab(label='Global Contagion', value='tab-map', children=[
                 dcc.Store(id='selected-map-date', data=None),
-                # === A LINHA MESTRA (Garante que todas as colunas vão até ao chão) ===
+                
                 html.Div([
                     
-                    # --- COLUNA 1: Esquerda (Stress Events / Fundo preto) ---
+                    
                     html.Div([
                         html.Div([
                             html.H3("STRESS EVENTS (Click)", style={'fontSize': '20px', 'color': '#e74c3c', 'marginBottom': '10px'}),
@@ -814,14 +797,13 @@ The size of each peripheral node reflects its trading volume. Large bubbles indi
                         'width': '250px', 'minWidth': '250px', 'padding': '15px', 
                         'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a', 
                         'boxSizing': 'border-box'
-                        # SEM 'height' definido. O 'stretch' puxa a cor de fundo até abaixo!
+                        
                     }),
                     
-                    # --- COLUNA 2: Centro (Mapa e Botões) ---
+                   
                     html.Div([
                         
-                        # Barra superior com botões
-                        # Barra superior com botões alinhados numa única linha
+                      
                         html.Div([
                             dcc.RadioItems(
                                 id='map-vis-type',
@@ -834,7 +816,7 @@ The size of each peripheral node reflects its trading volume. Large bubbles indi
                                 value='delta', 
                                 inline=True, 
                                 style={'display': 'flex', 'alignItems': 'center', 'color': 'white', 'marginRight': '30px'},
-                                # Deixamos o labelStyle super limpo só com a fonte e margem!
+                                
                                 labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'fontFamily': '"EB Garamond", serif', 'fontSize': '16px', 'whiteSpace': 'nowrap'}
                             ),
                             
@@ -851,26 +833,26 @@ The size of each peripheral node reflects its trading volume. Large bubbles indi
                                 value='1M', 
                                 inline=True, 
                                 style={'display': 'flex', 'alignItems': 'center'},
-                                # Deixamos o labelStyle super limpo aqui também!
+                                
                                 labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'fontFamily': 'sans-serif', 'fontSize': '14px', 'fontWeight': 'bold'}
                             )
-                        # flexWrap: 'nowrap' proíbe a barra preta de atirar o segundo grupo para a linha de baixo
+                        
                         ], style={'padding': '10px 20px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'flexDirection': 'row', 'alignItems': 'center', 'flexWrap': 'nowrap'}),
                         
-                        # Contentor do Mapa
+                        
                         html.Div([
                             dcc.Graph(
                                 id='contagion-map', 
                                 className='clicavel', 
                                 mathjax=True, 
                                 config={'displayModeBar': False},
-                                style={'flex': '1', 'width': '100%', 'height': '100%'} # Isto obriga o mapa a encher a tela vazia
+                                style={'flex': '1', 'width': '100%', 'height': '100%'} 
                             )
                         ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'})
                         
                     ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'backgroundColor': '#000'}),
                     
-                    # --- COLUNA 3: Direita (Caixa de Texto) ---
+                    
                     html.Div([
                         html.H3("GLOBAL CONTAGION ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
                         dcc.Markdown(r"""
@@ -903,34 +885,29 @@ Check the **Safe Havens** sidebar. It automatically filters countries where the 
         ], style={'height': '44px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333'})
     ])
 
-    # 3. O LAYOUT FINAL A ENVOLVER AS ABAS
-    # ==========================================
-    # ESTILOS DAS ABAS (Para resolver a visibilidade e tamanho)
-    # ==========================================
+    
     estilo_aba_inativa = {
-        'backgroundColor': '#222222', # Fundo cinzento escuro para se ver bem que é um botão
-        'color': '#888888',           # Letra cinzenta clara
-        'fontSize': '18px',           # Aumenta o tamanho da letra (podes ajustar este valor!)
+        'backgroundColor': '#222222', 
+        'color': '#888888',           
+        'fontSize': '18px',           
         'fontWeight': 'bold',
-        'border': '1px solid #333',   # Borda suave
-        'padding': '12px'             # Espaço interno confortável
+        'border': '1px solid #333',   
+        'padding': '12px'             
     }
 
     estilo_aba_ativa = {
     'backgroundColor': '#111111',
-    'color': '#d4af37',               # <-- Novo tom dourado elegante
+    'color': '#d4af37',               
     'fontSize': '18px',
     'fontWeight': 'bold',
-    'borderTop': '3px solid #d4af37', # <-- Barra superior a condizer
+    'borderTop': '3px solid #d4af37', 
     'borderBottom': 'none',
     'borderLeft': '1px solid #333',
     'borderRight': '1px solid #333',
     'padding': '12px'
     }
 
-    # ==========================================
-    # O RETURN FINAL SEGURO
-    # ==========================================
+    
     return html.Div([
         stores_and_modals, 
         
@@ -938,7 +915,7 @@ Check the **Safe Havens** sidebar. It automatically filters countries where the 
             id="main-tabs",
             value='tab-story', 
             children=[
-                # --- ABA 1 ---
+                
                 dcc.Tab(
                     label='Story Mode', 
                     value='tab-story',
@@ -946,7 +923,7 @@ Check the **Safe Havens** sidebar. It automatically filters countries where the 
                     selected_style=estilo_aba_ativa,
                     children=[story_sections] 
                 ),
-                # --- ABA 2 ---
+                
                 dcc.Tab(
                     label='Main Dashboard', 
                     value='tab-main',
@@ -955,6 +932,6 @@ Check the **Safe Havens** sidebar. It automatically filters countries where the 
                     children=[dashboard_content] 
                 )
             ],
-            style={'backgroundColor': '#111111'} # Fundo do contentor das abas
+            style={'backgroundColor': '#111111'} 
         )
     ])
