@@ -6,11 +6,11 @@ Built using **Python**, **Dash**, and **Plotly**, the architecture decouples a h
 
 ---
 
-##  Key Architectural Features
+## 🚀 Key Architectural Features
 
-* **Tail Risk Isolation:** Computes non-parametric empirical Value at Risk ($VaR_{99\%}$) to programmatically slice historical stress periods and extreme loss events.
-* **Vectorized Contagion Modeling:** Tracks the structural shock transmission vector ($\Delta\rho$) across markets by evaluating raw global correlation matrices between calm and high-liquidation stress windows.
-* **Predictive Risk Banding:** Deploys an asynchronous bootstrap Monte Carlo simulation engine to project 1,000 parallel random walk asset paths and extract the dynamic Expected Shortfall ($ES_{1\%}$) over a 30-day temporal horizon.
+* **Tail Risk Isolation:** Computes non-parametric empirical Value at Risk (VaR<sub>99%</sub>) to programmatically slice historical stress periods and extreme loss events.
+* **Vectorized Contagion Modeling:** Tracks the structural shock transmission vector (Δρ) across markets by evaluating raw global correlation matrices between calm and high-liquidation stress windows.
+* **Predictive Risk Banding:** Deploys an asynchronous bootstrap Monte Carlo simulation engine to project 1,000 parallel random walk asset paths and extract the dynamic Expected Shortfall (ES<sub>1%</sub>) over a 30-day temporal horizon.
 * **Occlusion-Free Macro-Cartography:** Implements an iterative, force-directed **Dorling Cartogram layout** to scale sovereign equity proxies (ETFs) by trading volume, preventing node overlap and label bleeding while maintaining global geographic placement.
 
 ---
