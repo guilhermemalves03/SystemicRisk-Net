@@ -605,7 +605,7 @@ def register_callbacks(app, engine):
         # 4. LAYOUT FINAL E ANIMAÇÃO
         fig_map.update_layout(
             # Título usando texto normal e caracteres Unicode. Nunca falha!
-            title=f"Shock (Δρ) - {target_date} (Calm: 1M)",
+            title=f"Shock (Δρ) - {target_date}",
             title_x=0.5,
             title_y=0.92,   
             font=LATEX_FONT, 
@@ -1074,7 +1074,7 @@ def register_callbacks(app, engine):
                 
                 # Atualizar o hover para mostrar o volume formatado!
                 vol_text = f"{vol:,.0f}" if vol > 0 else "N/A"
-                hover_texts.append(f"Ticker: {node['ticker']}<br>Força (ρ): {node['rho']:.2f}<br>Salto (Δρ): {delta_val:.2f}<br>Volume: {vol_text}")
+                hover_texts.append(f"Ticker: {node['ticker']}<br>Correlation (ρ): {node['rho']:.2f}<br>Shock (Δρ): {delta_val:.2f}<br>Volume: {vol_text}")
                 custom_data.append(node['ticker']) 
                 
                 # --- OPACIDADE DA LINHA ---
@@ -1132,19 +1132,24 @@ def register_callbacks(app, engine):
                                  marker=dict(size=65, color='#3498db', line=dict(width=2, color='#3498db')), 
                                  hoverinfo='text', name='Center', showlegend=False, cliponaxis=False))
 
-        x_axis = dict(visible=False, range=[-1.9, 1.9], autorange=False)
-        y_axis = dict(visible=False, range=[-1.9, 1.9], autorange=False, scaleanchor="x", scaleratio=1)
-
+        # --- UPDATE LAYOUT COM ZOOM MANUAL AJUSTADO (STORY MODE) ---
         fig.update_layout(
             title=f"Contagion Network - {target_date}", title_x=0.5,
             font=LATEX_FONT, template="plotly_dark",
-            xaxis=x_axis,
-            yaxis=y_axis,
+            
+            # O "Sweet Spot": [-1.8, 1.8] faz o gráfico crescer sem cortar os nomes!
+            xaxis=dict(visible=False, range=[-1.8, 1.8], autorange=False, scaleanchor="y", scaleratio=1),
+            yaxis=dict(visible=False, range=[-1.8, 1.8], autorange=False),
+            
             plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(l=20, r=20, t=50, b=40),
+            margin=dict(l=10, r=10, t=90, b=20),
+            
             uirevision='constant',
             dragmode=False
         )
+        
+        fig.update_xaxes(fixedrange=True)
+        fig.update_yaxes(fixedrange=True)
 
         btn_text = "SHOW FULL NETWORK" if show_safe else "HIGHLIGHT SAFE HAVENS"
         fig.update_layout(dragmode=False)

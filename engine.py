@@ -34,19 +34,23 @@ class SystemicRiskEngine:
         empresas_df = self.assets_df[~self.assets_df['sector'].isin(['Country', 'Index', 'ETF'])]
         valid_tickers = empresas_df['ticker'].tolist()
 
-        stress_corrs, _ = self.get_bulk_contagion(target_date, '1M')
-        if stress_corrs is None: return [], []
+        # MUDANÇA 1: Apanhar TAMBÉM as correlações do período calmo (calm_corrs)
+        stress_corrs, calm_corrs = self.get_bulk_contagion(target_date, '1M')
+        if stress_corrs is None or calm_corrs is None: return [], []
 
         for ticker in valid_tickers:
             if ticker == self.main_ticker or ticker not in stress_corrs: 
                 continue
             
             stress_rho = stress_corrs[ticker]
+            # MUDANÇA 2: Apanhar o valor calmo para podermos fazer a subtração
+            calm_rho = calm_corrs[ticker] if ticker in calm_corrs else 0.0
+            
             if not pd.isna(stress_rho):
                 name_match = self.assets_df[self.assets_df['ticker'] == ticker]['name'].values
                 name = name_match[0] if len(name_match) > 0 else ticker
                 
-# --- NOVA LÓGICA: EXTRAIR VOLUME DIRETAMENTE NO MOTOR ---
+                # --- LÓGICA DE VOLUME (Mantém-se igual e segura) ---
                 vol = 0.0
                 if self.volume is not None and ticker in self.volume.columns:
                     try:
@@ -57,14 +61,17 @@ class SystemicRiskEngine:
                             idx = self.volume.index.get_indexer([dt], method='nearest')[0]
                             vol = float(self.volume.iloc[idx][ticker])
                             
-                        # --- A TUA CORREÇÃO ESTÁ AQUI ---
-                        if pd.isna(vol):  # Se for NaN, força a ser 0
+                        if pd.isna(vol):  
                             vol = 0.0
                             
                     except:
-                        vol = 0.0 # Garante que volta a 0 se der mesmo erro
-                        
-                correlations.append({'ticker': ticker, 'name': name, 'rho': stress_rho, 'volume': vol})
+                        vol = 0.0 
+                
+                # MUDANÇA 3: Calcular finalmente o Delta Rho (Salto)
+                delta_rho = stress_rho - calm_rho if not pd.isna(calm_rho) else stress_rho
+                    
+                # MUDANÇA 4: Adicionar o 'delta' ao dicionário que é enviado para os Callbacks
+                correlations.append({'ticker': ticker, 'name': name, 'rho': stress_rho, 'delta': delta_rho, 'volume': vol})
         
         df = pd.DataFrame(correlations).sort_values('rho', ascending=False)
         if len(df) < top_n * 2: return [], []

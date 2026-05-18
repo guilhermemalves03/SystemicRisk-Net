@@ -403,28 +403,40 @@ In a crisis, correlations usually **spike to 1**. This is "Contagion": when ever
                 html.Div([
                     html.Span("●", style={'color': '#e74c3c', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.5em', 'textAlign': 'center'}),
                     html.Span([html.B("Top (Red): "), "Systemic Risk. Assets that crash alongside the main asset."])
-                ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '15px'}),
+                ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '12px'}),
                 
                 # Linha 2: Bottom (Green)
                 html.Div([
                     html.Span("●", style={'color': '#2ecc71', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.5em', 'textAlign': 'center'}),
                     html.Span([html.B("Bottom (Green): "), "Safe Havens. Assets that protect the portfolio."])
-                ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '15px'}),
+                ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '12px'}),
                 
                 # Linha 3: Line Thickness
                 html.Div([
-                    html.Span("━", style={'color': '#fff', 'width': '35px', 'display': 'inline-block', 'fontWeight': 'bold', 'textAlign': 'center'}),
-                    html.Span([html.B("Line Thickness: "), "Absolute strength of the stress correlation."])
+                    html.Span("━", style={'color': '#fff', 'width': '35px', 'display': 'inline-block', 'fontWeight': 'bold', 'textAlign': 'center', 'fontSize': '1.2em'}),
+                    html.Span([html.B("Line Thickness: "), "Absolute strength of the stress correlation (ρ)."])
+                ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '12px'}),
+
+                # Linha 4: Distance
+                html.Div([
+                    html.Span("↔", style={'color': '#3498db', 'width': '35px', 'display': 'inline-block', 'fontWeight': 'bold', 'textAlign': 'center', 'fontSize': '1.5em'}),
+                    html.Span([html.B("Distance: "), "Shock (Δρ). Closer nodes suffered a sudden jump in correlation."])
+                ], style={'display': 'flex', 'alignItems': 'center', 'marginBottom': '12px'}),
+
+                # Linha 5: Volume
+                html.Div([
+                    html.Span("⬤", style={'color': '#fff', 'width': '35px', 'display': 'inline-block', 'fontSize': '1.3em', 'textAlign': 'center'}),
+                    html.Span([html.B("Bubble Size: "), "Trading Volume. Larger nodes represent heavily traded."])
                 ], style={'display': 'flex', 'alignItems': 'center'})
 
             ], style={
                 'marginTop': '20px', 
                 'backgroundColor': '#0a0a0a', 
-                'padding': '30px', 
+                'padding': '25px', 
                 'borderRadius': '10px', 
                 'border': '1px solid #333', 
                 'color': '#eee', 
-                'fontSize': '1.1em', 
+                'fontSize': '1.05em', 
                 'display': 'flex', 
                 'flexDirection': 'column', 
                 'alignItems': 'flex-start'
@@ -477,11 +489,19 @@ In a crisis, correlations usually **spike to 1**. This is "Contagion": when ever
                     'lineHeight': '1.1' 
                 }
             ),
-            html.P("While public news is universally accessible, systemic risks often spread unseen across borders and sectors. During this specific shock, the correlation between Apple and Asian markets spiked to unprecedented levels.", 
-                   style={'color': '#bbb', 'fontSize': '1.6em', 'textAlign': 'left'}),            
+            
+            html.P("While systemic risks often spread invisibly across the globe, there are exceptions. During the Apple shock, while much of Asia crashed, Vietnam acted as a 'safe haven,' completely decoupling from the market (a -0.73 correlation jump). Identifying these anomalies allows you to build effective geographical shields to protect your portfolio during crises.", 
+                   style={'color': '#bbb', 'fontSize': '1.4em', 'textAlign': 'left'}),            
+            
             html.Div(id='asia-impact-table', style={'marginTop': '30px', 'width': '100%'}),
             
-        ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'justifyContent': 'center'}),
+        ], style={
+            'width': '50%', 
+            'padding': '100px 40px 40px 40px', # <-- AUMENTAMOS O PADDING NO TOPO (100px)
+            'display': 'flex', 
+            'flexDirection': 'column', 
+            'justifyContent': 'flex-start'     # <-- MUDÁMOS DE 'center' PARA 'flex-start'
+        }),
 
         # --- COLUNA DIREITA: Mapa + Botão Zoom ---
         html.Div([
@@ -507,12 +527,20 @@ In a crisis, correlations usually **spike to 1**. This is "Contagion": when ever
                             'boxShadow': '0 4px 10px rgba(46, 204, 113, 0.4)',
                             'transition': '0.3s'
                         })
-        ], style={'width': '50%', 'padding': '40px', 'display': 'flex', 'flexDirection': 'column', 'alignItems': 'center', 'justifyContent': 'center'}),
+        ], style={
+            'width': '50%', 
+            'padding': '100px 40px 40px 40px', # <-- AUMENTAMOS O PADDING NO TOPO (100px)
+            'display': 'flex', 
+            'flexDirection': 'column', 
+            'alignItems': 'center', 
+            'justifyContent': 'flex-start'     # <-- MUDÁMOS DE 'center' PARA 'flex-start'
+        }),
+        
         # --- MENSAGEM FINAL NO LUGAR DA SETA ---
         html.Div("READY? SELECT 'MAIN DASHBOARD'", 
                  style={
                      'position': 'absolute', 
-                     'bottom': '30px', 
+                     'bottom': '30px',            # <-- Subi ligeiramente o botão de 30px para 50px
                      'left': '50%', 
                      'transform': 'translateX(-50%)',
                      'fontSize': '1.1em', 
@@ -524,8 +552,8 @@ In a crisis, correlations usually **spike to 1**. This is "Contagion": when ever
                      'borderRadius': '30px',
                      'border': '1px solid rgba(57, 255, 20, 0.3)'
                  })
-    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%', 'borderBottom': 'none'})), 
-
+    ], style=dict(story_style, **{'flexDirection': 'row', 'alignItems': 'stretch', 'padding': '0 5%', 'borderBottom': 'none'})),
+    
 ], style={
     'height': 'calc(100vh - 50px)',  
     'overflowY': 'scroll',           
