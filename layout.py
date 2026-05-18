@@ -497,7 +497,7 @@ In a crisis, correlations usually **spike to 1**. This is "Contagion": when ever
             
         ], style={
             'width': '50%', 
-            'padding': '100px 40px 40px 40px', # <-- AUMENTAMOS O PADDING NO TOPO (100px)
+            'padding': '50px 40px 40px 40px', # <-- AUMENTAMOS O PADDING NO TOPO (100px)
             'display': 'flex', 
             'flexDirection': 'column', 
             'justifyContent': 'flex-start'     # <-- MUDÁMOS DE 'center' PARA 'flex-start'
@@ -529,7 +529,7 @@ In a crisis, correlations usually **spike to 1**. This is "Contagion": when ever
                         })
         ], style={
             'width': '50%', 
-            'padding': '100px 40px 40px 40px', # <-- AUMENTAMOS O PADDING NO TOPO (100px)
+            'padding': '50px 40px 40px 40px', # <-- AUMENTAMOS O PADDING NO TOPO (100px)
             'display': 'flex', 
             'flexDirection': 'column', 
             'alignItems': 'center', 
@@ -733,17 +733,15 @@ Compare the final stats below the chart. If the potential minimum loss (Min) dra
 
             dcc.Tab(label='Market Connections', value='tab-network', children=[
                 html.Div([
-
-                                    
-                # MEMÓRIA INVISÍVEL: Guarda a data que está atualmente selecionada
-                dcc.Store(id='selected-network-date', data=None),
-                dcc.Store(id='node-click-memory', data=None),
+                    # MEMÓRIA INVISÍVEL
+                    dcc.Store(id='selected-network-date', data=None),
+                    dcc.Store(id='node-click-memory', data=None),
                     
                     # --- 1. CAIXA ESQUERDA (Stress Events) ---
                     html.Div([
                         html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
                         html.Div(id='extreme-dates-list-network', style={'fontSize': '14px', 'maxHeight': '800px', 'overflowY': 'auto', 'paddingRight': '5px'})
-                    ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
+                    ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a', 'height': '100%', 'boxSizing': 'border-box'}),
                     
                     # --- 2. CAIXA CENTRAL (O Grafo) ---
                     html.Div([
@@ -751,10 +749,9 @@ Compare the final stats below the chart. If the potential minimum loss (Min) dra
                             id='network-graph', 
                             config={'displayModeBar': False}, 
                             mathjax=True, 
-                            # MUDAR AQUI: Em vez de 750px, usamos 100% para ele bater nos limites exatos sem criar scroll
                             style={'height': '100%', 'width': '100%'} 
                         )
-                    ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column'}),
+                    ], style={'flex': '1', 'display': 'flex', 'flexDirection': 'column', 'height': '100%'}),
                     
                     # --- 3. CAIXA DIREITA (Metodologia) ---
                     html.Div([
@@ -773,14 +770,16 @@ Assets in the lower section move independently or in opposite directions during 
 **Trading Volume & Scale**
 The size of each peripheral node reflects its trading volume. Large bubbles indicate heavy market capitalization and institutional liquidity, showing you whether your portfolio shields or risk threats are major market players or smaller assets.
                         """, style={'color': '#bbb', 'fontSize': '15px', 'lineHeight': '1.6'})
-                    ], style=explanation_box_style)
+                        
+                    # O SEGREDO 1: Obrigar a caixa direita a ter 100% de altura
+                    ], style=dict(explanation_box_style, **{'height': '100%', 'overflowY': 'auto'})), 
                     
-                # MUDAR AQUI: Aplicar o bloqueio de altura e scroll exatamente como na Aba 1!
-                ], style={'display': 'flex', 'height': 'calc(100vh - 164px)', 'overflow': 'hidden', 'boxSizing': 'border-box'})
+                # O SEGREDO 2: Adicionar padding: 15px na Div principal (igual à tab do Monte Carlo)
+                ], style={'display': 'flex', 'height': 'calc(100vh - 164px)', 'padding': '15px', 'boxSizing': 'border-box'})
                 
             ], style={'backgroundColor': '#111', 'color': '#888', 'border': 'none', 'padding': '10px'}, 
-               selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #e74c3c', 'borderBottom': 'none', 'padding': '10px'}),            
-            
+               selected_style={'backgroundColor': '#000', 'color': '#fff', 'borderTop': '2px solid #e74c3c', 'borderBottom': 'none', 'padding': '10px'}),
+                           
             dcc.Tab(label='Global Contagion', value='tab-map', children=[
                 dcc.Store(id='selected-map-date', data=None),
                 # === A LINHA MESTRA (Garante que todas as colunas vão até ao chão) ===
