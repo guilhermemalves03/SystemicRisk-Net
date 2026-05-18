@@ -821,26 +821,26 @@ The size of each peripheral node reflects its trading volume. Large bubbles indi
                                 ],
                                 value='delta', 
                                 inline=True, 
-                                # Força os botões a ficarem numa linha
                                 style={'display': 'flex', 'alignItems': 'center', 'color': 'white', 'marginRight': '30px'},
-                                # whiteSpace: 'nowrap' proíbe que o botão se parta ao meio
-                                labelStyle={'display': 'flex', 'alignItems': 'center', 'color': 'white', 'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e', 'fontFamily': '"EB Garamond", serif', 'fontStyle': 'italic', 'fontSize': '16px', 'whiteSpace': 'nowrap'}
+                                # Deixamos o labelStyle super limpo só com a fonte e margem!
+                                labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'fontFamily': '"EB Garamond", serif', 'fontSize': '16px', 'whiteSpace': 'nowrap'}
                             ),
                             
                             html.Span("Pre-shock Calm Period: ", style={'color': 'white', 'fontSize': '14px', 'marginRight': '10px', 'fontFamily': 'sans-serif', 'whiteSpace': 'nowrap'}),
                             
                             dcc.RadioItems(
-                                id='calm-period-selector',
+                                id='calm-period-type',
                                 className='custom-radio',
                                 options=[
-                                    {'label': ' 1 Month', 'value': '1M'},
-                                    {'label': ' 3 Months', 'value': '3M'},
-                                    {'label': ' 1 Year', 'value': '1Y'}
+                                    {'label': '1 Month', 'value': '1M'},
+                                    {'label': '3 Months', 'value': '3M'},
+                                    {'label': '1 Year', 'value': '1Y'}
                                 ],
-                                value='3M', 
+                                value='1M', 
                                 inline=True, 
                                 style={'display': 'flex', 'alignItems': 'center'},
-                                labelStyle={'display': 'flex', 'alignItems': 'center', 'cursor': 'pointer', 'marginRight': '10px', 'backgroundColor': '#2c3e50', 'padding': '6px 12px', 'borderRadius': '4px', 'border': '1px solid #34495e', 'color': 'white', 'fontFamily': 'sans-serif', 'fontSize': '14px', 'whiteSpace': 'nowrap'}
+                                # Deixamos o labelStyle super limpo aqui também!
+                                labelStyle={'cursor': 'pointer', 'marginRight': '10px', 'fontFamily': 'sans-serif', 'fontSize': '14px', 'fontWeight': 'bold'}
                             )
                         # flexWrap: 'nowrap' proíbe a barra preta de atirar o segundo grupo para a linha de baixo
                         ], style={'padding': '10px 20px', 'backgroundColor': '#111', 'borderBottom': '1px solid #333', 'display': 'flex', 'flexDirection': 'row', 'alignItems': 'center', 'flexWrap': 'nowrap'}),

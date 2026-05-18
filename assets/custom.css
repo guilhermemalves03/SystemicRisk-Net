@@ -36,26 +36,44 @@ body, html {
 }
 
 /* ========================================= */
-/* 3. BOTÕES RÁDIO (Cor Roxa no Texto)       */
+/* 3. BOTÕES RÁDIO (Design Simples em Roxo)  */
 /* ========================================= */
-/* Esconde a bolinha padrão do rádio */
+
+/* 1. Esconder a bolinha original */
 .custom-radio input[type="radio"] {
     display: none;
 }
 
-/* Força a etiqueta E qualquer span dentro dela a ficarem roxos */
-/* Força a etiqueta a assumir o Azul da Dashboard quando selecionada */
-/* 1. Estilo da CAIXA do botão selecionado (fundo e borda) */
-.custom-radio label:has(input[type="radio"]:checked) {
-    border-color: #3498db !important; 
-    background-color: rgba(52, 152, 219, 0.15) !important; /* Preenche a caixa toda uniformemente */
+/* 2. Estilo Base do Botão (Não selecionado) */
+.custom-radio label {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    margin: 0 5px !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    transition: all 0.2s ease-in-out !important;
+    cursor: pointer;
+    border: 1px solid #34495e !important; /* Borda cinzenta/azulada base */
+    background-color: transparent !important;
+    color: #bbb !important; /* Texto base ligeiramente cinza */
 }
 
-/* 2. Estilo do TEXTO do botão selecionado (cor da letra e negrito) */
-.custom-radio label:has(input[type="radio"]:checked),
-.custom-radio label:has(input[type="radio"]:checked) * {
-    color: #3498db !important;
+/* 3. Estilo do Botão SELECIONADO (Caixa única, Roxo) */
+.custom-radio label:has(input:checked) {
+    /* Sem box-shadow, apenas mudamos as cores da caixa e do texto! */
+    border-color: #bd93f9 !important; /* Borda Roxa */
+    background-color: rgba(189, 147, 249, 0.15) !important; /* Fundo Roxo semitransparente */
+    color: #bd93f9 !important; /* Texto Roxo */
     font-weight: bold !important;
+    box-shadow: none !important; /* Garante que não há bordas extra */
+}
+
+/* 4. Remover qualquer contorno de foco quadrado do browser */
+.custom-radio input:focus + label,
+.custom-radio label:focus {
+    outline: none !important;
+    box-shadow: none !important; 
 }
 
 /* ========================================= */

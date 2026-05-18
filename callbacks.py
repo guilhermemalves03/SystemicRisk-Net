@@ -764,7 +764,7 @@ def register_callbacks(app, engine):
         [Output('contagion-map', 'figure'), Output('safe-havens-list', 'children')],
         [Input('selected-map-date', 'data'), 
          Input('map-vis-type', 'value'), 
-         Input('calm-period-selector', 'value'), 
+         Input('calm-period-type', 'value'), 
          Input('main-asset-dropdown', 'value')]
     )
     def render_map(selected_date, vis_type, calm_period, main_ticker):
@@ -775,7 +775,7 @@ def register_callbacks(app, engine):
         if not target_date: return go.Figure(), [html.Div("Insufficient data.")]
         try:
             date_obj = pd.to_datetime(target_date)
-            formatted_date = date_obj.strftime('%B %d, %Y') # Ex: February 12, 2026
+            formatted_date = date_obj.strftime('%Y-%m-%d') # Ex: 2026-02-12
         except:
             formatted_date = target_date
 
