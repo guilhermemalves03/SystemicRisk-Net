@@ -165,8 +165,7 @@ story_sections = html.Div([
         # Container de 3 Colunas (Tiles)
         html.Div([
             
-            
-            # Coluna 1: Retornos (Foco no Conceito)
+            # --- CAIXA 1: DAILY RETURNS ---
             html.Div([
                 html.Div(html.I(className="fa-solid fa-chart-line"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
                 html.H3("1. Daily Returns", style={'color': '#fff', 'marginBottom': '15px'}),
@@ -180,36 +179,49 @@ $$r_t = \ln\left(\frac{P_t}{P_{t-1}}\right)$$
 * $P_t$: Price **Today**
 * $P_{t-1}$: Price **Yesterday**
 
-*Why this tool?* Think of it as a **scale equalizer**. It translates raw price changes into a standardized format, allowing us to easily visualize and compare a $150 stock alongside a $3,000 stock without visual distortion.
+*Why this tool?* Think of it as a **scale equalizer**. It translates raw price changes into a standardized format, allowing us to easily visualize and compare a 150 stock alongside a 3,000 stock without visual distortion.
                 """, mathjax=True, style={'color': '#bbb', 'fontSize': '1.1em'})
             ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'}),
-            # Coluna 2: A Curva de Sino
+
+
+            # --- CAIXA 2: DISTRIBUTIONS ---
             html.Div([
-                html.Div(html.I(className="fa-solid fa-gaussian-blur"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
+                html.Div(html.I(className="fa-solid fa-chart-area"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
                 html.H3("2. Distributions", style={'color': '#fff', 'marginBottom': '15px'}),
                 dcc.Markdown(r"""
-We map every daily return onto a **Probability Curve**.
-* **Center:** Normal market days.
-* **Left Tail:** Where the "Black Swans" (extreme crashes) live.
-Our goal is to measure the thickness of this left tail.
+Once we calculate those daily returns, we stack them up. *How do we sort days by 'how good' or 'how bad' they were?*
+
+We organize them into a **Probability Curve**:
+
+* **The Center**: Normal, boring days. The stock barely moves.
+* **The Edges**: Solid gains or noticeable drops. Common, but not historic.
+* **The Left Tail**: The incredibly rare, historic "Black Swan" crashes.
+
+*Why does it matter?* Our dashboard focuses on measuring exactly how 'thick' that dangerous left tail really is.
                 """, mathjax=True, style={'color': '#bbb', 'fontSize': '1.1em'})
             ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'}),
 
-            # Coluna 3: Correlação de Stress
+
+            # --- CAIXA 3: CORRELATION ---
             html.Div([
-                html.Div(html.I(className="fa-solid fa-circle-nodes"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
-                html.H3("3. Correlation ($\\rho$)", style={'color': '#fff', 'marginBottom': '15px'}),
+                html.Div(html.I(className="fa-solid fa-link"), style={'fontSize': '40px', 'color': '#d4af37', 'marginBottom': '20px'}),
+                html.H3("3. Correlation", style={'color': '#fff', 'marginBottom': '15px'}),
                 dcc.Markdown(r"""
-Correlation measures how two assets move together. 
-$$\rho \in [-1, 1]$$
-In a crisis, correlations usually **spike to 1**. This is "Contagion": when everything falls at the same time.
+Correlation measures the invisible elastic band tying two assets together. *Do they move in sync?*
+
+It runs on a strict mathematical scale ($\rho$) from -1 to 1:
+
+* **+1 (Lockstep)**: If one falls, the other falls with it.
+* **0 (Strangers)**: Their movements are completely independent.
+* **-1 (Safe Havens)**: When one crashes, the other soars.
+
+*The Danger:* During a market panic, assets that normally act like strangers suddenly spike to +1. Everything crashes together. We call this **Contagion**.
                 """, mathjax=True, style={'color': '#bbb', 'fontSize': '1.1em'})
-            ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'}),
+            ], style={'flex': '1', 'padding': '30px', 'backgroundColor': '#0a0a0a', 'borderRadius': '10px', 'border': '1px solid #222', 'margin': '0 15px'})
 
         ], style={'display': 'flex', 'justifyContent': 'center', 'width': '90%', 'maxWidth': '1200px'}),
-
         html.P("Now that you know the basics, let's see them in action.", 
-               style={'color': '#666', 'marginTop': '50px', 'fontSize': '1.2em', 'fontStyle': 'italic'}),
+               style={'color': '#666', 'marginTop': '20px', 'fontSize': '1.2em', 'fontStyle': 'italic'}),
         
         html.Div("↓", style={'color': '#d4af37', 'position': 'absolute', 'bottom': '30px', 'fontSize': '2em'})
     ], style=story_style),
@@ -628,8 +640,8 @@ def get_layout(engine):
                 html.Div([
                     html.Div([
                         html.Div([
-                            html.H3("STRESS EVENTS", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                            html.Div(id='extreme-dates-list', style={'fontSize': '14px', 'maxHeight': '800px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                            html.H3("STRESS EVENTS", style={'fontSize': '20px', 'color': '#e74c3c', 'marginBottom': '10px'}),
+                            html.Div(id='extreme-dates-list', style={'fontSize': '18px', 'maxHeight': '800px', 'overflowY': 'auto', 'paddingRight': '5px'})
                         ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a'}),
                         
                         html.Div([
@@ -648,7 +660,7 @@ def get_layout(engine):
 
                             # O BOTÃO DE ALTERNÂNCIA (Agora imune aos saltos)
                             html.Button(
-                                "SHOW RIDGELINE PLOT", 
+                                "SHOW MONTHLY DISTRIBUTION PLOT", 
                                 id='toggle-risk-graphs-btn', 
                                 n_clicks=0, 
                                 style={
@@ -683,7 +695,7 @@ The red dashed line is the **Value at Risk (VaR)**, bounding the worst 1% of day
 
 **Tracking Risk Over Time**
 
-Market risk is dynamic. Click **SHOW RIDGELINE PLOT** below to view monthly shifts and:
+Market risk is dynamic. Click **SHOW MONTHLY DISTRIBUTION PLOT** below to view monthly shifts and:
 
 1. Identify the worst-performing months.
 2. Spot seasonal volatility.
@@ -739,8 +751,8 @@ Compare the final stats below the chart. If the potential minimum loss (Min) dra
                     
                     # --- 1. CAIXA ESQUERDA (Stress Events) ---
                     html.Div([
-                        html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                        html.Div(id='extreme-dates-list-network', style={'fontSize': '14px', 'maxHeight': '800px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                        html.H3("STRESS EVENTS (Click)", style={'fontSize': '20px', 'color': '#e74c3c', 'marginBottom': '10px'}),
+                        html.Div(id='extreme-dates-list-network', style={'fontSize': '18px', 'maxHeight': '800px', 'overflowY': 'auto', 'paddingRight': '5px'})
                     ], style={'width': '200px', 'padding': '15px', 'borderRight': '1px solid #333', 'backgroundColor': '#0a0a0a', 'height': '100%', 'boxSizing': 'border-box'}),
                     
                     # --- 2. CAIXA CENTRAL (O Grafo) ---
@@ -756,7 +768,7 @@ Compare the final stats below the chart. If the potential minimum loss (Min) dra
                     # --- 3. CAIXA DIREITA (Metodologia) ---
                     html.Div([
                         html.H3("CONTAGION TOPOLOGY ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
-                        dcc.Markdown("""
+                        dcc.Markdown(r"""
 This star network visualizes interconnected market dependency during extreme stress events. 
 
 When your main asset crashes, shocks transmit across corporate boundaries. Use this topology to read the direction of market pressure:
@@ -769,7 +781,7 @@ Assets in the lower section move independently or in opposite directions during 
 
 **Trading Volume & Scale**
 The size of each peripheral node reflects its trading volume. Large bubbles indicate heavy market capitalization and institutional liquidity, showing you whether your portfolio shields or risk threats are major market players or smaller assets.
-                        """, style={'color': '#bbb', 'fontSize': '15px', 'lineHeight': '1.6'})
+                        """,mathjax=True, style={'color': '#bbb', 'fontSize': '15px', 'lineHeight': '1.6'})
                         
                     # O SEGREDO 1: Obrigar a caixa direita a ter 100% de altura
                     ], style=dict(explanation_box_style, **{'height': '100%', 'overflowY': 'auto'})), 
@@ -788,15 +800,15 @@ The size of each peripheral node reflects its trading volume. Large bubbles indi
                     # --- COLUNA 1: Esquerda (Stress Events / Fundo preto) ---
                     html.Div([
                         html.Div([
-                            html.H3("STRESS EVENTS (Click)", style={'fontSize': '11px', 'color': '#e74c3c', 'marginBottom': '10px'}),
-                            html.Div(id='extreme-dates-list-map', className='custom-radio', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                            html.H3("STRESS EVENTS (Click)", style={'fontSize': '20px', 'color': '#e74c3c', 'marginBottom': '10px'}),
+                            html.Div(id='extreme-dates-list-map', className='custom-radio', style={'fontSize': '18px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
                         ], style={'marginBottom': '20px'}),
                         
                         html.Hr(style={'borderColor': '#333', 'margin': '0 0 15px 0', 'width': '100%'}),
                         
                         html.Div([
-                            html.H3("SAFE HAVENS", style={'fontSize': '11px', 'color': '#2ecc71', 'marginBottom': '10px'}),
-                            html.Div(id='safe-havens-list', style={'fontSize': '14px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
+                            html.H3("SAFE HAVENS", style={'fontSize': '20px', 'color': '#2ecc71', 'marginBottom': '10px'}),
+                            html.Div(id='safe-havens-list', style={'fontSize': '18px', 'maxHeight': '320px', 'overflowY': 'auto', 'paddingRight': '5px'})
                         ])
                     ], style={
                         'width': '250px', 'minWidth': '250px', 'padding': '15px', 
@@ -860,8 +872,8 @@ The size of each peripheral node reflects its trading volume. Large bubbles indi
                     
                     # --- COLUNA 3: Direita (Caixa de Texto) ---
                     html.Div([
-                        html.H3("GLOBAL CONTAGION ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '15px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
-                        dcc.Markdown("""
+                        html.H3("GLOBAL CONTAGION ANALYSIS", style={'color': '#3498db', 'marginTop': 0, 'fontSize': '16px', 'fontFamily': 'sans-serif', 'letterSpacing': '1px'}),
+                        dcc.Markdown(r"""
 This Dorling cartogram maps geographic shock transmission, scaling countries by trading volume to remove area bias.
 
 **Visual Metric Guide:**
@@ -871,7 +883,7 @@ This Dorling cartogram maps geographic shock transmission, scaling countries by 
 
 **Portfolio Protection:**
 Check the **Safe Havens** sidebar. It automatically filters countries where the shock dropped ($\Delta\rho < 0$) *and* absolute stress correlation remained negative or zero ($\rho_{\text{stress}} \le 0$). Use these assets as your core structural diversifiers.
-                        """, mathjax=True, style={'color': '#bbb', 'fontSize': '13.5px', 'lineHeight': '1.4'})
+                        """, mathjax=True, style={'color': '#bbb', 'fontSize': '15px', 'lineHeight': '1.6'})
                     ], style=dict(explanation_box_style, **{
                         'width': '300px',            
                         'minWidth': '300px', 

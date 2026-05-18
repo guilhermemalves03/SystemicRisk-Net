@@ -417,13 +417,13 @@ def register_callbacks(app, engine):
         
         # Se o número de cliques for par (ou 0 ao iniciar)
         if n_clicks % 2 == 0:
-            texto_botao = "SHOW RIDGELINE PLOT"
+            texto_botao = "SHOW MONTHLY DISTRIBUTION PLOT"
             # Mostra o Distribution, esconde o Ridgeline
             return estilo_visivel, estilo_escondido, texto_botao
             
         # Se o número de cliques for ímpar
         else:
-            texto_botao = "SHOW DISTRIBUTION PLOT"
+            texto_botao = "SHOW AGGREGATED DISTRIBUTION PLOT"
             # Esconde o Distribution, mostra o Ridgeline
             return estilo_escondido, estilo_visivel, texto_botao
         
